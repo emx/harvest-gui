@@ -149,8 +149,14 @@ pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
         .map_err(|e| format!("Failed to seek: {}", e))?;
 
     let mut buf = String::new();
-    file.read_to_string(&mut buf)
-        .map_err(|e| format!("Failed to read log: {}", e))?;
+    if file.read_to_string(&mut buf).is_err() {
+        // Chunk may have landed mid-UTF-8 character — fall back to full read
+        buf.clear();
+        file.seek(SeekFrom::Start(0))
+            .map_err(|e| format!("Failed to seek: {}", e))?;
+        file.read_to_string(&mut buf)
+            .map_err(|e| format!("Failed to read log: {}", e))?;
+    }
 
     let all_lines: Vec<&str> = buf.lines().collect();
     let skip = all_lines.len().saturating_sub(n);
