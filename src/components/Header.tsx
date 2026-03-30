@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfig, useHarvestStatus } from "@/queries";
-import { useAppStore } from "@/store";
+import { useAppStore, serializeFlags } from "@/store";
 
 export function Header() {
   const { data: config } = useConfig();
@@ -19,12 +19,7 @@ export function Header() {
         await invoke("stop_harvest");
       } else {
         await invoke("start_harvest", {
-          flags: {
-            once: harvestFlags.once || null,
-            use_aria2: harvestFlags.useAria2 || null,
-            parallel: harvestFlags.parallel > 1 ? harvestFlags.parallel : null,
-            verbose: harvestFlags.verbose || null,
-          },
+          flags: serializeFlags(harvestFlags),
         });
       }
       refetch();

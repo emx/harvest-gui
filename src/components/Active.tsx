@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { Play, Square } from "lucide-react";
+import { Play, Square, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useHarvestStatus } from "@/queries";
-import { useAppStore } from "@/store";
+import { useAppStore, serializeFlags } from "@/store";
 
 const MAX_LOG_LINES = 1000;
 
@@ -14,6 +14,52 @@ interface LogEntry {
   line: string;
   stream: string;
   timestamp: string;
+}
+
+function AssetPreview() {
+  const [loading, setLoading] = useState(false);
+  const [assets, setAssets] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchAssets() {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await invoke<string[]>("list_assets");
+      setAssets(result);
+    } catch (e) {
+      setError(`${e}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-sm font-medium">Available Assets</CardTitle>
+        <Button variant="outline" size="sm" onClick={fetchAssets} disabled={loading}>
+          <List className="size-3.5" data-icon="inline-start" />
+          {loading ? "Loading..." : "Fetch Assets"}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {!assets.length && !error && (
+          <p className="text-sm text-muted-foreground">
+            Fetch available assets before starting a download
+          </p>
+        )}
+        {assets.length > 0 && (
+          <div className="max-h-36 overflow-y-auto rounded bg-black/50 p-3 font-mono text-xs leading-5">
+            {assets.map((line, i) => (
+              <div key={i} className="text-foreground">{line}</div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export function Active() {
@@ -59,12 +105,7 @@ export function Active() {
     setLogs([]);
     try {
       await invoke("start_harvest", {
-        flags: {
-          once: harvestFlags.once || null,
-          use_aria2: harvestFlags.useAria2 || null,
-          parallel: harvestFlags.parallel > 1 ? harvestFlags.parallel : null,
-          verbose: harvestFlags.verbose || null,
-        },
+        flags: serializeFlags(harvestFlags),
       });
       refetch();
     } catch (e) {
@@ -186,6 +227,8 @@ export function Active() {
           </div>
         </CardContent>
       </Card>
+
+      <AssetPreview />
 
       <Card>
         <CardHeader>

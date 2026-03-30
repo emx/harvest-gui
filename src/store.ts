@@ -16,6 +16,16 @@ interface AppState {
   setHarvestFlags: (flags: Partial<HarvestFlags>) => void;
 }
 
+/** Serialize HarvestFlags for the Rust invoke call */
+export function serializeFlags(flags: HarvestFlags) {
+  return {
+    once: flags.once || null,
+    use_aria2: flags.useAria2 || null,
+    parallel: flags.parallel > 1 ? flags.parallel : null,
+    verbose: flags.verbose || null,
+  };
+}
+
 export const useAppStore = create<AppState>((set) => ({
   activeView: "dashboard",
   setActiveView: (view) => set({ activeView: view }),

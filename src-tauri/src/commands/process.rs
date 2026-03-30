@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
 use std::process::{Child, Command, Stdio};
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -144,13 +144,9 @@ pub fn start_harvest(
 
     let mut reader_threads = Vec::new();
 
-    // Use Arc<Mutex<bool>> to signal threads when process is done
-    let done = Arc::new(Mutex::new(false));
-
     // Stream stdout
     if let Some(stdout) = child.stdout.take() {
         let app_handle = app.clone();
-        let done_flag = Arc::clone(&done);
         let t = std::thread::spawn(move || {
             let reader = BufReader::new(stdout);
             for line in reader.lines() {
@@ -168,7 +164,6 @@ pub fn start_harvest(
                     Err(_) => break,
                 }
             }
-            *done_flag.lock().unwrap_or_else(|e| e.into_inner()) = true;
         });
         reader_threads.push(t);
     }

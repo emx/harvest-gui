@@ -55,3 +55,21 @@ export function useHarvestStatus() {
     staleTime: 3_000,
   });
 }
+
+export function useTailLog(lines: number = 100) {
+  return useQuery({
+    queryKey: ["tailLog", lines],
+    queryFn: () => invoke<string[]>("tail_log", { lines }),
+    staleTime: 10_000,
+    refetchInterval: 10_000,
+  });
+}
+
+export function useListAssets(enabled: boolean) {
+  return useQuery({
+    queryKey: ["listAssets"],
+    queryFn: () => invoke<string[]>("list_assets"),
+    enabled,
+    staleTime: 60_000,
+  });
+}

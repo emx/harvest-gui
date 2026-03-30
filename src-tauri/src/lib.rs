@@ -14,6 +14,7 @@ pub fn run() {
             commands::list_collect_files,
             commands::get_config,
             commands::tail_log,
+            commands::list_assets,
             commands::process::start_harvest,
             commands::process::stop_harvest,
             commands::process::harvest_status,

@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Dashboard } from "@/components/Dashboard";
 import { History } from "@/components/History";
 import { Active } from "@/components/Active";
+import { Health } from "@/components/Health";
 import { useAppStore, type View } from "@/store";
 import "./App.css";
 
@@ -18,7 +19,7 @@ const views: Record<View, React.ComponentType> = {
   dashboard: Dashboard,
   active: Active,
   history: History,
-  health: () => <PlaceholderView name="Health" />,
+  health: Health,
   settings: () => <PlaceholderView name="Settings" />,
 };
 

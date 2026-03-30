@@ -7,6 +7,7 @@ use std::env;
 use std::fs;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
+use std::process::Command;
 
 fn canopy_dir() -> Result<PathBuf, String> {
     env::var("CANOPY_LOCAL_DIR")
@@ -163,4 +164,20 @@ pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
     let all_lines: Vec<&str> = buf.lines().collect();
     let skip = all_lines.len().saturating_sub(n);
     Ok(all_lines[skip..].iter().map(|s| s.to_string()).collect())
+}
+
+#[tauri::command]
+pub fn list_assets() -> Result<Vec<String>, String> {
+    let output = Command::new("uv")
+        .args(["run", "python", "-m", "harvest", "--assets"])
+        .output()
+        .map_err(|e| format!("Failed to run harvest --assets: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("harvest --assets failed: {}", stderr.trim()));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.lines().map(|s| s.to_string()).collect())
 }
