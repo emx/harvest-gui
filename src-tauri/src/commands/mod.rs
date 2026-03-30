@@ -3,7 +3,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::io::{BufRead, BufReader};
+use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 
 fn canopy_dir() -> Result<PathBuf, String> {
@@ -102,10 +102,11 @@ pub fn get_config() -> Vec<ConfigEntry> {
         .map(|&name| match env::var(name) {
             Ok(val) => {
                 let display_val = if name == "CANOPY_CLIENT_SECRET" {
-                    if val.len() >= 4 {
-                        format!("****{}", &val[val.len() - 4..])
-                    } else {
+                    let last4: String = val.chars().rev().take(4).collect::<Vec<_>>().into_iter().rev().collect();
+                    if last4.is_empty() {
                         "****".to_string()
+                    } else {
+                        format!("****{}", last4)
                     }
                 } else {
                     val
@@ -129,14 +130,29 @@ pub fn get_config() -> Vec<ConfigEntry> {
 pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
     let n = lines.unwrap_or(50);
     let path = canopy_dir()?.join("harvest.log");
-    let file = fs::File::open(&path)
+    let mut file = fs::File::open(&path)
         .map_err(|e| format!("Failed to open {}: {}", path.display(), e))?;
-    let reader = BufReader::new(file);
-    let all_lines: Vec<String> = reader
-        .lines()
-        .collect::<Result<Vec<_>, _>>()
+
+    let file_len = file
+        .metadata()
+        .map_err(|e| format!("Failed to read metadata: {}", e))?
+        .len();
+
+    if file_len == 0 {
+        return Ok(Vec::new());
+    }
+
+    // Read a chunk from the end — 512 bytes per line is generous
+    let chunk_size = std::cmp::min(file_len, (n as u64) * 512);
+    let start_pos = file_len - chunk_size;
+    file.seek(SeekFrom::Start(start_pos))
+        .map_err(|e| format!("Failed to seek: {}", e))?;
+
+    let mut buf = String::new();
+    file.read_to_string(&mut buf)
         .map_err(|e| format!("Failed to read log: {}", e))?;
 
-    let start = all_lines.len().saturating_sub(n);
-    Ok(all_lines[start..].to_vec())
+    let all_lines: Vec<&str> = buf.lines().collect();
+    let skip = all_lines.len().saturating_sub(n);
+    Ok(all_lines[skip..].iter().map(|s| s.to_string()).collect())
 }
