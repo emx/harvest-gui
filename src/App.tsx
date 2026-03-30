@@ -2,7 +2,8 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { Dashboard } from "@/components/Dashboard";
 import { History } from "@/components/History";
-import { useAppStore } from "@/store";
+import { Active } from "@/components/Active";
+import { useAppStore, type View } from "@/store";
 import "./App.css";
 
 function PlaceholderView({ name }: { name: string }) {
@@ -13,8 +14,17 @@ function PlaceholderView({ name }: { name: string }) {
   );
 }
 
+const views: Record<View, React.ComponentType> = {
+  dashboard: Dashboard,
+  active: Active,
+  history: History,
+  health: () => <PlaceholderView name="Health" />,
+  settings: () => <PlaceholderView name="Settings" />,
+};
+
 function App() {
   const activeView = useAppStore((s) => s.activeView);
+  const ViewComponent = views[activeView];
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -22,11 +32,7 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
-          {activeView === "dashboard" && <Dashboard />}
-          {activeView === "history" && <History />}
-          {activeView !== "dashboard" && activeView !== "history" && (
-            <PlaceholderView name={activeView.charAt(0).toUpperCase() + activeView.slice(1)} />
-          )}
+          <ViewComponent />
         </main>
       </div>
     </div>

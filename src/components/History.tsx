@@ -12,23 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useProcessed, useCollectFiles, type CollectEntry } from "@/queries";
+import { formatDate, formatBytes } from "@/lib/format";
 
 type SortKey = "id" | "date";
 type SortDir = "asc" | "desc";
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "Unknown";
-  return d.toLocaleString();
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-}
 
 function DetailPanel({
   collectId,

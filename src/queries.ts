@@ -43,3 +43,15 @@ export function useConfig() {
     staleTime: 30_000,
   });
 }
+
+export interface ProcessStatus {
+  running: boolean;
+}
+
+export function useHarvestStatus() {
+  return useQuery({
+    queryKey: ["harvestStatus"],
+    queryFn: () => invoke<ProcessStatus>("harvest_status"),
+    staleTime: 3_000,
+  });
+}
