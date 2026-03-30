@@ -3,10 +3,12 @@ import { invoke } from "@tauri-apps/api/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfig, useHarvestStatus } from "@/queries";
+import { useAppStore } from "@/store";
 
 export function Header() {
   const { data: config } = useConfig();
   const { data: status, refetch } = useHarvestStatus();
+  const harvestFlags = useAppStore((s) => s.harvestFlags);
   const modeEntry = config?.find((c) => c.name === "CANOPY_MODE");
   const mode = modeEntry?.status === "set" ? modeEntry.value : null;
   const running = status?.running ?? false;
@@ -16,7 +18,14 @@ export function Header() {
       if (running) {
         await invoke("stop_harvest");
       } else {
-        await invoke("start_harvest", { flags: {} });
+        await invoke("start_harvest", {
+          flags: {
+            once: harvestFlags.once || null,
+            use_aria2: harvestFlags.useAria2 || null,
+            parallel: harvestFlags.parallel > 1 ? harvestFlags.parallel : null,
+            verbose: harvestFlags.verbose || null,
+          },
+        });
       }
       refetch();
     } catch {

@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useHarvestStatus } from "@/queries";
+import { useAppStore } from "@/store";
+
+const MAX_LOG_LINES = 1000;
 
 interface LogEntry {
   line: string;
@@ -20,17 +23,17 @@ export function Active() {
   const [stopping, setStopping] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
-  // Flag controls
-  const [once, setOnce] = useState(false);
-  const [useAria2, setUseAria2] = useState(false);
-  const [verbose, setVerbose] = useState(false);
-  const [parallel, setParallel] = useState<number>(1);
+  const harvestFlags = useAppStore((s) => s.harvestFlags);
+  const setHarvestFlags = useAppStore((s) => s.setHarvestFlags);
 
   const running = status?.running ?? false;
 
   useEffect(() => {
     const unlisten = listen<LogEntry>("harvest-log", (event) => {
-      setLogs((prev) => [...prev, event.payload]);
+      setLogs((prev) => {
+        const next = [...prev, event.payload];
+        return next.length > MAX_LOG_LINES ? next.slice(-MAX_LOG_LINES) : next;
+      });
     });
     return () => {
       unlisten.then((fn) => fn());
@@ -57,10 +60,10 @@ export function Active() {
     try {
       await invoke("start_harvest", {
         flags: {
-          once: once || null,
-          use_aria2: useAria2 || null,
-          parallel: parallel > 1 ? parallel : null,
-          verbose: verbose || null,
+          once: harvestFlags.once || null,
+          use_aria2: harvestFlags.useAria2 || null,
+          parallel: harvestFlags.parallel > 1 ? harvestFlags.parallel : null,
+          verbose: harvestFlags.verbose || null,
         },
       });
       refetch();
@@ -114,8 +117,8 @@ export function Active() {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={once}
-                onChange={(e) => setOnce(e.target.checked)}
+                checked={harvestFlags.once}
+                onChange={(e) => setHarvestFlags({ once: e.target.checked })}
                 disabled={running}
                 className="accent-primary"
               />
@@ -124,8 +127,10 @@ export function Active() {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={useAria2}
-                onChange={(e) => setUseAria2(e.target.checked)}
+                checked={harvestFlags.useAria2}
+                onChange={(e) =>
+                  setHarvestFlags({ useAria2: e.target.checked })
+                }
                 disabled={running}
                 className="accent-primary"
               />
@@ -134,8 +139,10 @@ export function Active() {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={verbose}
-                onChange={(e) => setVerbose(e.target.checked)}
+                checked={harvestFlags.verbose}
+                onChange={(e) =>
+                  setHarvestFlags({ verbose: e.target.checked })
+                }
                 disabled={running}
                 className="accent-primary"
               />
@@ -147,8 +154,12 @@ export function Active() {
                 type="number"
                 min={1}
                 max={32}
-                value={parallel}
-                onChange={(e) => setParallel(parseInt(e.target.value) || 1)}
+                value={harvestFlags.parallel}
+                onChange={(e) =>
+                  setHarvestFlags({
+                    parallel: parseInt(e.target.value) || 1,
+                  })
+                }
                 disabled={running}
                 className="h-7 w-16 rounded border border-input bg-background px-2 text-sm"
               />
