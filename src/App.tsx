@@ -1,49 +1,78 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const [result, setResult] = useState<string>("");
+  const [loading, setLoading] = useState<string | null>(null);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+  async function callCommand(name: string, args?: Record<string, unknown>) {
+    setLoading(name);
+    setResult("");
+    try {
+      const res = await invoke(name, args);
+      setResult(JSON.stringify(res, null, 2));
+    } catch (e) {
+      setResult(`Error: ${e}`);
+    } finally {
+      setLoading(null);
+    }
   }
 
   return (
     <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+      <h1>Harvest GUI — Command Test</h1>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className="row" style={{ flexWrap: "wrap", gap: "8px" }}>
+        <button
+          disabled={loading !== null}
+          onClick={() => callCommand("get_processed")}
+        >
+          get_processed
+        </button>
+        <button
+          disabled={loading !== null}
+          onClick={() => callCommand("get_last_poll")}
+        >
+          get_last_poll
+        </button>
+        <button
+          disabled={loading !== null}
+          onClick={() => callCommand("list_collect_files")}
+        >
+          list_collect_files
+        </button>
+        <button
+          disabled={loading !== null}
+          onClick={() => callCommand("get_config")}
+        >
+          get_config
+        </button>
+        <button
+          disabled={loading !== null}
+          onClick={() => callCommand("tail_log", { lines: 20 })}
+        >
+          tail_log (20)
+        </button>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
+      {loading && <p>Loading {loading}...</p>}
+
+      <pre
+        style={{
+          textAlign: "left",
+          background: "#1a1a1a",
+          padding: "16px",
+          borderRadius: "8px",
+          marginTop: "16px",
+          maxHeight: "400px",
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
         }}
       >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+        {result || "Click a button to invoke a command"}
+      </pre>
     </main>
   );
 }
