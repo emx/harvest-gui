@@ -7,6 +7,8 @@ export interface HarvestFlags {
   useAria2: boolean;
   verbose: boolean;
   parallel: number;
+  include: string;
+  exclude: string;
 }
 
 interface AppState {
@@ -22,6 +24,8 @@ export function serializeFlags(flags: HarvestFlags) {
     once: flags.once || null,
     use_aria2: flags.useAria2 || null,
     parallel: flags.parallel > 1 ? flags.parallel : null,
+    include: flags.include || null,
+    exclude: flags.exclude || null,
     verbose: flags.verbose || null,
   };
 }
@@ -34,6 +38,8 @@ export const useAppStore = create<AppState>((set) => ({
     useAria2: false,
     verbose: false,
     parallel: 1,
+    include: "",
+    exclude: "",
   },
   setHarvestFlags: (flags) =>
     set((state) => ({

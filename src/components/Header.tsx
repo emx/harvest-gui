@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Satellite, Play, Square } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,14 @@ export function Header() {
   const mode = modeEntry?.status === "set" ? modeEntry.value : null;
   const running = status?.running ?? false;
 
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
   async function handleToggle() {
     try {
       if (running) {
@@ -23,8 +32,8 @@ export function Header() {
         });
       }
       refetch();
-    } catch {
-      // Active view will show the error
+    } catch (e) {
+      setError(`${e}`);
     }
   }
 
@@ -35,6 +44,11 @@ export function Header() {
         <span className="text-lg font-semibold">Harvest</span>
       </div>
       <div className="flex items-center gap-3">
+        {error && (
+          <span className="text-xs text-destructive max-w-[200px] truncate">
+            {error}
+          </span>
+        )}
         {mode && (
           <Badge
             variant={mode === "production" ? "default" : "secondary"}

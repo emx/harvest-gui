@@ -53,23 +53,30 @@ function MetricCards() {
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      {metrics.map((m) => (
-        <Card key={m.label}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {m.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {m.loading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : m.error ? (
-              <ErrorCard error={m.error} />
-            ) : (
-              <p className="text-2xl font-bold">{m.value ?? 0}</p>
-            )}
-          </CardContent>
-        </Card>
+      {metrics.map((m, i) => (
+        <motion.div
+          key={m.label}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: i * 0.05 }}
+        >
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {m.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {m.loading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : m.error ? (
+                <ErrorCard error={m.error} />
+              ) : (
+                <p className="text-2xl font-bold">{m.value ?? 0}</p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
     </div>
   );
