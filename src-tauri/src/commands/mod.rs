@@ -176,22 +176,37 @@ pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 pub fn list_assets(app: AppHandle) -> Result<Vec<String>, String> {
-    let output = if let Some(python) = bundled_python(&app) {
+    let mut cmd = if let Some(python) = bundled_python(&app) {
         let python_home = app
             .path()
             .resource_dir()
             .map(|d| d.join("resources/python"))
             .unwrap_or_default();
-        Command::new(python)
-            .env("PYTHONHOME", &python_home)
-            .args(["-m", "harvest", "--assets"])
-            .output()
+        let mut c = Command::new(python);
+        c.env("PYTHONHOME", &python_home);
+        c.args(["-m", "harvest", "--assets"]);
+        c
     } else {
-        Command::new("uv")
-            .args(["run", "python", "-m", "harvest", "--assets"])
-            .output()
+        let mut c = Command::new("uv");
+        c.args(["run", "python", "-m", "harvest", "--assets"]);
+        c
+    };
+
+    // Inject resolved config values as env vars (config file overrides env vars)
+    let env_vars = config::get_resolved_env(app.clone())
+        .map_err(|e| format!("Failed to load configuration: {}. Check Settings.", e))?;
+    for (key, val) in &env_vars {
+        cmd.env(key, val);
     }
-    .map_err(|e| format!("Failed to run harvest --assets: {}", e))?;
+
+    // Set HARVEST_ARIA2C_PATH if bundled aria2c is available
+    if let Some(aria2c) = bundled_aria2c(&app) {
+        cmd.env("HARVEST_ARIA2C_PATH", aria2c);
+    }
+
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to run harvest --assets: {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
