@@ -62,3 +62,8 @@ logs/
 pytest-of-*/
 .claude/settings.local.json
 docs/staging/
+
+# Bundled binaries (build artifacts)
+src-tauri/resources/python/
+src-tauri/resources/harvest-venv/
+src-tauri/resources/bin/
