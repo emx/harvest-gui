@@ -10,6 +10,57 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::process::Command;
 
+use tauri::{AppHandle, Manager};
+
+/// Resolve the bundled Python path, or None if not bundled (dev mode fallback)
+pub fn bundled_python(app: &AppHandle) -> Option<PathBuf> {
+    let resource_dir = app.path().resource_dir().ok()?;
+    let python = if cfg!(windows) {
+        resource_dir.join("resources/harvest-venv/Scripts/python.exe")
+    } else {
+        resource_dir.join("resources/harvest-venv/bin/python")
+    };
+    if python.exists() {
+        Some(python)
+    } else {
+        // Dev mode: check src-tauri/resources directly
+        let dev_python = if cfg!(windows) {
+            PathBuf::from("resources/harvest-venv/Scripts/python.exe")
+        } else {
+            PathBuf::from("resources/harvest-venv/bin/python")
+        };
+        if dev_python.exists() {
+            Some(dev_python)
+        } else {
+            None
+        }
+    }
+}
+
+/// Resolve the bundled aria2c path
+pub fn bundled_aria2c(app: &AppHandle) -> Option<PathBuf> {
+    let resource_dir = app.path().resource_dir().ok()?;
+    let aria2c = if cfg!(windows) {
+        resource_dir.join("resources/bin/aria2c.exe")
+    } else {
+        resource_dir.join("resources/bin/aria2c")
+    };
+    if aria2c.exists() {
+        Some(aria2c)
+    } else {
+        let dev_aria2c = if cfg!(windows) {
+            PathBuf::from("resources/bin/aria2c.exe")
+        } else {
+            PathBuf::from("resources/bin/aria2c")
+        };
+        if dev_aria2c.exists() {
+            Some(dev_aria2c)
+        } else {
+            None
+        }
+    }
+}
+
 fn canopy_dir() -> Result<PathBuf, String> {
     env::var("CANOPY_LOCAL_DIR")
         .map(PathBuf::from)
@@ -124,11 +175,17 @@ pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-pub fn list_assets() -> Result<Vec<String>, String> {
-    let output = Command::new("uv")
-        .args(["run", "python", "-m", "harvest", "--assets"])
-        .output()
-        .map_err(|e| format!("Failed to run harvest --assets: {}", e))?;
+pub fn list_assets(app: AppHandle) -> Result<Vec<String>, String> {
+    let output = if let Some(python) = bundled_python(&app) {
+        Command::new(python)
+            .args(["-m", "harvest", "--assets"])
+            .output()
+    } else {
+        Command::new("uv")
+            .args(["run", "python", "-m", "harvest", "--assets"])
+            .output()
+    }
+    .map_err(|e| format!("Failed to run harvest --assets: {}", e))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

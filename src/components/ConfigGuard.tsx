@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useResolvedConfig } from "@/queries";
 import { useAppStore } from "@/store";
 
-const CRITICAL_FIELDS = ["CANOPY_CLIENT_ID", "CANOPY_CLIENT_SECRET", "CANOPY_LOCAL_DIR"];
+const CRITICAL_FIELDS = ["CANOPY_CLIENT_ID", "CANOPY_CLIENT_SECRET", "CANOPY_ORG_ID", "CANOPY_LOCAL_DIR"];
 
 export function ConfigGuard({ children }: { children: React.ReactNode }) {
   const { data: resolved, isLoading } = useResolvedConfig();

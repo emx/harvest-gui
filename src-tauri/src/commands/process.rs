@@ -111,8 +111,15 @@ pub fn start_harvest(
         }
     }
 
-    let mut cmd = Command::new("uv");
-    cmd.arg("run").arg("python").arg("-m").arg("harvest");
+    let mut cmd = if let Some(python) = super::bundled_python(&app) {
+        let mut c = Command::new(python);
+        c.args(["-m", "harvest"]);
+        c
+    } else {
+        let mut c = Command::new("uv");
+        c.args(["run", "python", "-m", "harvest"]);
+        c
+    };
 
     if flags.once.unwrap_or(false) {
         cmd.arg("--once");
@@ -132,6 +139,11 @@ pub fn start_harvest(
         .map_err(|e| format!("Failed to load configuration: {}. Check Settings.", e))?;
     for (key, val) in &env_vars {
         cmd.env(key, val);
+    }
+
+    // Set HARVEST_ARIA2C_PATH if bundled aria2c is available
+    if let Some(aria2c) = super::bundled_aria2c(&app) {
+        cmd.env("HARVEST_ARIA2C_PATH", aria2c);
     }
 
     cmd.stdout(Stdio::piped());
