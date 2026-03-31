@@ -47,6 +47,18 @@ if (-not (Test-Path $PythonBin)) {
 Write-Host ">>> Creating venv..."
 & $PythonBin -m venv "$ResourcesDir\harvest-venv"
 
+# Copy Python DLL into venv Scripts/ so the venv Python can find it
+Write-Host ">>> Copying Python DLL into venv..."
+$DllFiles = Get-ChildItem "$ResourcesDir\python" -Filter "python3*.dll" -ErrorAction SilentlyContinue
+if ($DllFiles) {
+    foreach ($dll in $DllFiles) {
+        Copy-Item $dll.FullName "$ResourcesDir\harvest-venv\Scripts\"
+        Write-Host "    Copied $($dll.Name) to harvest-venv\Scripts\"
+    }
+} else {
+    Write-Host "WARNING: No python3*.dll found in standalone Python directory"
+}
+
 $VenvPip = "$ResourcesDir\harvest-venv\Scripts\pip.exe"
 $VenvPython = "$ResourcesDir\harvest-venv\Scripts\python.exe"
 
