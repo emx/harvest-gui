@@ -6,8 +6,8 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = Split-Path -Parent $ScriptDir
 $ResourcesDir = Join-Path $ProjectDir "src-tauri\resources"
 
-$PythonVersion = "3.11.11"
-$PythonBuildTag = "20250409"
+$PythonVersion = "3.11.15"
+$PythonBuildTag = "20260325"
 $Aria2Version = "1.37.0"
 
 $PythonTriple = "x86_64-pc-windows-msvc"

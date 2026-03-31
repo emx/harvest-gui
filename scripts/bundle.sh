@@ -7,8 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 RESOURCES_DIR="$PROJECT_DIR/src-tauri/resources"
 
-PYTHON_VERSION="3.11.11"
-PYTHON_BUILD_TAG="20250409"
+PYTHON_VERSION="3.11.15"
+PYTHON_BUILD_TAG="20260325"
 ARIA2_VERSION="1.37.0"
 
 # Detect platform
