@@ -112,7 +112,13 @@ pub fn start_harvest(
     }
 
     let mut cmd = if let Some(python) = super::bundled_python(&app) {
+        let python_home = app
+            .path()
+            .resource_dir()
+            .map(|d| d.join("resources/python"))
+            .unwrap_or_default();
         let mut c = Command::new(python);
+        c.env("PYTHONHOME", &python_home);
         c.args(["-m", "harvest"]);
         c
     } else {
