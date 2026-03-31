@@ -38,33 +38,38 @@ export function Header() {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border px-4">
+    <header className="flex h-14 items-center justify-between border-b border-white/[0.08] px-4 bg-background">
       <div className="flex items-center gap-2">
-        <Satellite className="size-5 text-primary" />
-        <span className="text-lg font-semibold">Harvest</span>
+        <Satellite className="size-5 text-teal-500" />
+        <span className="text-lg font-semibold text-slate-100">Harvest</span>
       </div>
       <div className="flex items-center gap-3">
         {error && (
-          <span className="text-xs text-destructive max-w-[200px] truncate">
+          <span className="text-xs text-red-400 max-w-[200px] truncate">
             {error}
           </span>
         )}
         {mode && (
           <Badge
-            variant={mode === "production" ? "default" : "secondary"}
+            variant="secondary"
             className={
               mode === "production"
-                ? "bg-green-600/20 text-green-400 border-green-600/30"
-                : "bg-yellow-600/20 text-yellow-400 border-yellow-600/30"
+                ? "bg-teal-500/20 text-teal-400 border-teal-500/30"
+                : "bg-amber-500/20 text-amber-400 border-amber-500/30"
             }
           >
             {mode}
           </Badge>
         )}
         <Button
-          variant={running ? "destructive" : "outline"}
+          variant={running ? "destructive" : "default"}
           size="sm"
           onClick={handleToggle}
+          className={
+            running
+              ? "bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30"
+              : "bg-teal-600 text-white hover:bg-teal-500 border-teal-500/30"
+          }
         >
           {running ? (
             <>

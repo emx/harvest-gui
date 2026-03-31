@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
+import { StatusBar } from "@/components/StatusBar";
 import { Dashboard } from "@/components/Dashboard";
 import { History } from "@/components/History";
 import { Active } from "@/components/Active";
@@ -26,7 +27,7 @@ function App() {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-grid-dots">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}
@@ -40,6 +41,7 @@ function App() {
           </AnimatePresence>
         </main>
       </div>
+      <StatusBar />
     </div>
   );
 }

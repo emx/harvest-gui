@@ -29,9 +29,9 @@ function DetailPanel({
   const entry = collects?.find((c) => c.collect_id === collectId);
 
   return (
-    <Card className="mt-4">
+    <Card className="glass-card mt-4">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium font-mono">
+        <CardTitle className="text-sm font-medium font-mono text-slate-200">
           {collectId}
         </CardTitle>
         <Button variant="ghost" size="icon-xs" onClick={onClose}>
@@ -40,9 +40,7 @@ function DetailPanel({
       </CardHeader>
       <CardContent>
         {!entry || entry.files.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No files downloaded
-          </p>
+          <p className="text-sm text-slate-500">No files downloaded</p>
         ) : (
           <div className="space-y-1">
             {entry.files.map((f) => (
@@ -50,10 +48,10 @@ function DetailPanel({
                 key={f.name}
                 className="flex items-center justify-between text-sm"
               >
-                <span className="font-mono truncate max-w-[300px]">
+                <span className="font-mono truncate max-w-[300px] text-slate-300">
                   {f.name}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="font-mono text-slate-500">
                   {formatBytes(f.size)}
                 </span>
               </div>
@@ -114,7 +112,7 @@ export function History() {
   if (processed.error) {
     return (
       <div className="p-6">
-        <p className="text-sm text-destructive">{processed.error.message}</p>
+        <p className="text-sm text-red-400">{processed.error.message}</p>
       </div>
     );
   }
@@ -122,23 +120,23 @@ export function History() {
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold">History</h2>
+        <h2 className="text-lg font-semibold text-slate-100">History</h2>
         <input
           type="text"
           placeholder="Filter by collect ID..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-8 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="h-8 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
         />
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border border-white/[0.08] glass-card overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="border-white/[0.05] hover:bg-transparent">
               <TableHead>
                 <button
-                  className="flex items-center gap-1 text-xs font-medium"
+                  className="flex items-center gap-1 text-xs font-semibold tracking-wider uppercase text-slate-400"
                   onClick={() => toggleSort("id")}
                 >
                   Collect ID
@@ -147,7 +145,7 @@ export function History() {
               </TableHead>
               <TableHead>
                 <button
-                  className="flex items-center gap-1 text-xs font-medium"
+                  className="flex items-center gap-1 text-xs font-semibold tracking-wider uppercase text-slate-400"
                   onClick={() => toggleSort("date")}
                 >
                   Processed Date
@@ -161,26 +159,30 @@ export function History() {
               <TableRow>
                 <TableCell
                   colSpan={2}
-                  className="text-center text-muted-foreground"
+                  className="text-center text-slate-500"
                 >
                   {search
                     ? "No matching collects"
-                    : "No processed collects"}
+                    : "No processed collects yet"}
                 </TableCell>
               </TableRow>
             ) : (
               entries.map((e) => (
                 <TableRow
                   key={e.id}
-                  className={`cursor-pointer ${selectedId === e.id ? "bg-accent" : ""}`}
+                  className={`cursor-pointer border-white/[0.03] transition-colors ${
+                    selectedId === e.id
+                      ? "bg-teal-500/10"
+                      : "hover:bg-white/[0.03]"
+                  }`}
                   onClick={() =>
                     setSelectedId(selectedId === e.id ? null : e.id)
                   }
                 >
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm text-slate-300">
                     {e.id}
                   </TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell className="text-sm font-mono text-slate-400">
                     {formatDate(e.ts)}
                   </TableCell>
                 </TableRow>

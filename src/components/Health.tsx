@@ -10,7 +10,7 @@ import { AssetFetcher } from "@/components/AssetFetcher";
 export function Health() {
   return (
     <div className="space-y-6 p-6">
-      <h2 className="text-lg font-semibold">Health</h2>
+      <h2 className="text-lg font-semibold text-slate-100">Health</h2>
       <ConnectionTest />
       <LogViewer />
       <AssetFetcher />
@@ -37,9 +37,11 @@ function ConnectionTest() {
   }
 
   return (
-    <Card>
+    <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="text-sm font-medium">Connection Test</CardTitle>
+        <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+          Connection Test
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex items-center gap-3">
         <Button
@@ -47,6 +49,7 @@ function ConnectionTest() {
           size="sm"
           onClick={test}
           disabled={status === "loading"}
+          className="border-white/[0.08] hover:bg-white/[0.03]"
         >
           <RefreshCw
             className={`size-3.5 ${status === "loading" ? "animate-spin" : ""}`}
@@ -55,7 +58,7 @@ function ConnectionTest() {
           {status === "loading" ? "Testing..." : "Test Connection"}
         </Button>
         {status === "ok" && (
-          <span className="flex items-center gap-1.5 text-sm text-green-400">
+          <span className="flex items-center gap-1.5 text-sm text-teal-400">
             <CheckCircle className="size-4" />
             {message}
           </span>
@@ -80,17 +83,19 @@ function LogViewer() {
   );
 
   return (
-    <Card>
+    <Card className="glass-card">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium">Log Viewer</CardTitle>
+        <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+          Log Viewer
+        </CardTitle>
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Filter logs..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="h-7 rounded-md border border-input bg-background pl-7 pr-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-7 rounded-md border border-white/[0.08] bg-white/[0.03] pl-7 pr-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
           />
         </div>
       </CardHeader>
@@ -98,16 +103,16 @@ function LogViewer() {
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : error ? (
-          <p className="text-sm text-destructive">{error.message}</p>
+          <p className="text-sm text-red-400">{error.message}</p>
         ) : (
-          <div className="h-64 overflow-y-auto rounded bg-black/50 p-3 font-mono text-xs leading-5">
+          <div className="h-64 overflow-y-auto rounded bg-black/40 p-3 font-mono text-xs leading-5 border border-white/[0.05]">
             {!filtered || filtered.length === 0 ? (
-              <span className="text-muted-foreground">
+              <span className="text-slate-500">
                 {filter ? "No matching log lines" : "No log data"}
               </span>
             ) : (
               filtered.map((line, i) => (
-                <div key={i} className="text-foreground">
+                <div key={i} className="text-slate-300">
                   {line}
                 </div>
               ))

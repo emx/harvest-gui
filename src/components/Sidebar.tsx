@@ -21,19 +21,35 @@ export function Sidebar() {
   const setActiveView = useAppStore((s) => s.setActiveView);
 
   return (
-    <aside className="flex w-48 flex-col gap-1 border-r border-border p-2">
+    <aside
+      className="flex w-48 flex-col gap-0.5 border-r border-white/[0.05] p-2"
+      style={{ background: "oklch(0.129 0.014 264)" }}
+    >
       {navItems.map(({ view, label, icon: Icon }) => (
         <button
           key={view}
           onClick={() => setActiveView(view)}
           className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+            "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors relative",
             activeView === view
-              ? "bg-accent text-accent-foreground"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              ? "text-teal-400"
+              : "text-slate-400 hover:bg-white/[0.03] hover:text-slate-300"
           )}
+          style={
+            activeView === view
+              ? { background: "oklch(0.704 0.14 181 / 10%)" }
+              : undefined
+          }
         >
-          <Icon className="size-4" />
+          {activeView === view && (
+            <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-teal-500" />
+          )}
+          <Icon
+            className={cn(
+              "size-4",
+              activeView === view && "text-teal-400 drop-shadow-[0_0_6px_oklch(0.704_0.14_181_/_50%)]"
+            )}
+          />
           {label}
         </button>
       ))}

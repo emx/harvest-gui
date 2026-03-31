@@ -90,36 +90,40 @@ export function Active() {
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold">Active Process</h2>
+        <h2 className="text-lg font-semibold text-slate-100">
+          Active Process
+        </h2>
         <Badge
-          variant={running ? "default" : "secondary"}
+          variant="secondary"
           className={
             running
-              ? "bg-green-600/20 text-green-400 border-green-600/30"
-              : ""
+              ? "bg-teal-500/20 text-teal-400 border-teal-500/30"
+              : "bg-slate-700/50 text-slate-400 border-slate-600/30"
           }
         >
           {running ? "Running" : "Stopped"}
         </Badge>
       </div>
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Controls</CardTitle>
+          <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+            Controls
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-slate-300">
               <input
                 type="checkbox"
                 checked={harvestFlags.once}
                 onChange={(e) => setHarvestFlags({ once: e.target.checked })}
                 disabled={running}
-                className="accent-primary"
+                className="accent-teal-500"
               />
               --once
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-slate-300">
               <input
                 type="checkbox"
                 checked={harvestFlags.useAria2}
@@ -127,11 +131,11 @@ export function Active() {
                   setHarvestFlags({ useAria2: e.target.checked })
                 }
                 disabled={running}
-                className="accent-primary"
+                className="accent-teal-500"
               />
               --use-aria2
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-slate-300">
               <input
                 type="checkbox"
                 checked={harvestFlags.verbose}
@@ -139,11 +143,11 @@ export function Active() {
                   setHarvestFlags({ verbose: e.target.checked })
                 }
                 disabled={running}
-                className="accent-primary"
+                className="accent-teal-500"
               />
               --verbose
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-slate-300">
               --parallel
               <input
                 type="number"
@@ -156,14 +160,19 @@ export function Active() {
                   })
                 }
                 disabled={running}
-                className="h-7 w-16 rounded border border-input bg-background px-2 text-sm"
+                className="h-7 w-16 rounded border border-white/[0.08] bg-white/[0.03] px-2 text-sm text-slate-200"
               />
             </label>
           </div>
 
           <div className="flex gap-2">
             {!running ? (
-              <Button onClick={handleStart} disabled={starting} size="sm">
+              <Button
+                onClick={handleStart}
+                disabled={starting}
+                size="sm"
+                className="bg-teal-600 text-white hover:bg-teal-500"
+              >
                 <Play className="size-4" data-icon="inline-start" />
                 {starting ? "Starting..." : "Start Harvest"}
               </Button>
@@ -171,8 +180,8 @@ export function Active() {
               <Button
                 onClick={handleStop}
                 disabled={stopping}
-                variant="destructive"
                 size="sm"
+                className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30"
               >
                 <Square className="size-4" data-icon="inline-start" />
                 {stopping ? "Stopping..." : "Stop Harvest"}
@@ -187,17 +196,19 @@ export function Active() {
         maxHeight="max-h-36"
       />
 
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Live Log</CardTitle>
+          <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+            Live Log
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div
             ref={logRef}
-            className="h-80 overflow-y-auto rounded bg-black/50 p-3 font-mono text-xs leading-5"
+            className="h-80 overflow-y-auto rounded bg-black/40 p-3 font-mono text-xs leading-5 border border-white/[0.05]"
           >
             {logs.length === 0 ? (
-              <span className="text-muted-foreground">
+              <span className="text-slate-500">
                 No log output yet. Start harvest to see live logs.
               </span>
             ) : (
@@ -207,7 +218,7 @@ export function Active() {
                   className={
                     entry.stream === "stderr"
                       ? "text-red-400"
-                      : "text-foreground"
+                      : "text-slate-300"
                   }
                 >
                   {entry.line}
