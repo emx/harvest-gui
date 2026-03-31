@@ -12,6 +12,21 @@ export interface ConfigEntry {
   value: string;
 }
 
+export interface ResolvedConfigEntry {
+  name: string;
+  status: string;
+  value: string;
+  source: string;
+}
+
+export interface AppConfig {
+  canopy_client_id: string;
+  canopy_client_secret: string;
+  canopy_org_id: string;
+  canopy_local_dir: string;
+  canopy_mode: string;
+}
+
 export function useProcessed() {
   return useQuery({
     queryKey: ["processed"],
@@ -84,6 +99,22 @@ export function useCanopyDirCheck() {
     queryKey: ["canopyDirCheck"],
     queryFn: () => invoke<boolean>("check_canopy_dir"),
     staleTime: 30_000,
+  });
+}
+
+export function useResolvedConfig() {
+  return useQuery({
+    queryKey: ["resolvedConfig"],
+    queryFn: () => invoke<ResolvedConfigEntry[]>("get_resolved_config"),
+    staleTime: 10_000,
+  });
+}
+
+export function useAppConfig() {
+  return useQuery({
+    queryKey: ["appConfig"],
+    queryFn: () => invoke<AppConfig>("load_config"),
+    staleTime: 10_000,
   });
 }
 

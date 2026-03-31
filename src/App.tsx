@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
@@ -8,6 +9,7 @@ import { Active } from "@/components/Active";
 import { Health } from "@/components/Health";
 import { Settings } from "@/components/Settings";
 import { useAppStore, type View } from "@/store";
+import { useResolvedConfig } from "@/queries";
 import "./App.css";
 
 const views: Record<View, React.ComponentType> = {
@@ -20,7 +22,19 @@ const views: Record<View, React.ComponentType> = {
 
 function App() {
   const activeView = useAppStore((s) => s.activeView);
+  const setActiveView = useAppStore((s) => s.setActiveView);
   const ViewComponent = views[activeView];
+
+  const { data: resolved } = useResolvedConfig();
+
+  // First-launch: if no config values are set, redirect to Settings
+  useEffect(() => {
+    if (!resolved) return;
+    const allMissing = resolved.every((e) => e.status === "missing");
+    if (allMissing) {
+      setActiveView("settings");
+    }
+  }, [resolved, setActiveView]);
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">

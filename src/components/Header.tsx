@@ -3,11 +3,11 @@ import { Satellite, Play, Square } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useConfig, useHarvestStatus } from "@/queries";
+import { useResolvedConfig, useHarvestStatus } from "@/queries";
 import { useAppStore, serializeFlags } from "@/store";
 
 export function Header() {
-  const { data: config } = useConfig();
+  const { data: config } = useResolvedConfig();
   const { data: status, refetch } = useHarvestStatus();
   const harvestFlags = useAppStore((s) => s.harvestFlags);
   const modeEntry = config?.find((c) => c.name === "CANOPY_MODE");

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { CheckCircle2, HardDrive, Database } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProcessed, useLastPoll, useCollectFiles, useConfig, useDiskUsage } from "@/queries";
+import { useProcessed, useLastPoll, useCollectFiles, useResolvedConfig, useDiskUsage } from "@/queries";
 import { formatRelativeTime, formatBytes } from "@/lib/format";
 import { useAppStore } from "@/store";
 
@@ -256,7 +256,7 @@ function RecentActivity() {
 }
 
 function ConfigSummary() {
-  const { data, isLoading, error } = useConfig();
+  const { data, isLoading, error } = useResolvedConfig();
   const setActiveView = useAppStore((s) => s.setActiveView);
 
   if (isLoading) return <Skeleton className="h-24 w-full" />;

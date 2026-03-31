@@ -127,7 +127,12 @@ pub fn start_harvest(
         cmd.arg("--verbose");
     }
 
-    // CR-02: No need to explicitly set CANOPY_* env vars — Command inherits parent env
+    // Inject resolved config values as env vars (config file overrides env vars)
+    if let Ok(env_vars) = super::config::get_resolved_env(&app) {
+        for (key, val) in env_vars {
+            cmd.env(&key, &val);
+        }
+    }
 
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());

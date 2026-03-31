@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useHarvestStatus, useLastPoll, useConfig } from "@/queries";
+import { useHarvestStatus, useLastPoll, useResolvedConfig } from "@/queries";
 import { formatRelativeTime } from "@/lib/format";
 
 export function StatusBar() {
   const { data: status } = useHarvestStatus();
   const { data: lastPoll } = useLastPoll();
-  const { data: config } = useConfig();
+  const { data: config } = useResolvedConfig();
   const [elapsed, setElapsed] = useState("");
 
   const running = status?.running ?? false;
