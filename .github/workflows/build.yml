@@ -20,6 +20,9 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Install aria2
+        run: brew install aria2
+
       - name: Bundle resources
         run: bash scripts/bundle.sh
 
