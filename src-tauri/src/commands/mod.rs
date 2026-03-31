@@ -177,7 +177,13 @@ pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
 #[tauri::command]
 pub fn list_assets(app: AppHandle) -> Result<Vec<String>, String> {
     let output = if let Some(python) = bundled_python(&app) {
+        let python_home = app
+            .path()
+            .resource_dir()
+            .map(|d| d.join("resources/python"))
+            .unwrap_or_default();
         Command::new(python)
+            .env("PYTHONHOME", &python_home)
             .args(["-m", "harvest", "--assets"])
             .output()
     } else {
