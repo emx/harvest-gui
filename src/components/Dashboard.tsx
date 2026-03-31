@@ -134,14 +134,6 @@ function MetricCards() {
                   {m.value ?? 0}
                 </p>
               )}
-              {m.label === "Disk Usage" && !m.loading && !m.error && (
-                <div className="mt-2 h-1 rounded-full bg-slate-700 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-teal-500/60"
-                    style={{ width: `${Math.min(((diskUsage ?? 0) / (1024 * 1024 * 1024)) * 100, 100)}%` }}
-                  />
-                </div>
-              )}
             </CardContent>
           </Card>
         </motion.div>

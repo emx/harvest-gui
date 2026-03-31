@@ -50,38 +50,7 @@
 
 /* Mission Control — dark only */
 :root {
-    --background: oklch(0.205 0.015 264);
-    --foreground: oklch(0.968 0.007 264);
-    --card: oklch(0.235 0.014 264 / 80%);
-    --card-foreground: oklch(0.968 0.007 264);
-    --popover: oklch(0.235 0.014 264);
-    --popover-foreground: oklch(0.968 0.007 264);
-    --primary: oklch(0.704 0.14 181);
-    --primary-foreground: oklch(0.129 0.014 264);
-    --secondary: oklch(0.279 0.014 264);
-    --secondary-foreground: oklch(0.968 0.007 264);
-    --muted: oklch(0.279 0.014 264);
-    --muted-foreground: oklch(0.554 0.022 264);
-    --accent: oklch(0.279 0.014 264);
-    --accent-foreground: oklch(0.968 0.007 264);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 8%);
-    --input: oklch(1 0 0 / 12%);
-    --ring: oklch(0.704 0.14 181);
-    --chart-1: oklch(0.704 0.14 181);
-    --chart-2: oklch(0.554 0.022 264);
-    --chart-3: oklch(0.439 0.022 264);
-    --chart-4: oklch(0.371 0.022 264);
-    --chart-5: oklch(0.279 0.014 264);
     --radius: 0.625rem;
-    --sidebar: oklch(0.129 0.014 264);
-    --sidebar-foreground: oklch(0.968 0.007 264);
-    --sidebar-primary: oklch(0.704 0.14 181);
-    --sidebar-primary-foreground: oklch(0.968 0.007 264);
-    --sidebar-accent: oklch(0.704 0.14 181 / 10%);
-    --sidebar-accent-foreground: oklch(0.704 0.14 181);
-    --sidebar-border: oklch(1 0 0 / 5%);
-    --sidebar-ring: oklch(0.704 0.14 181);
 }
 
 .dark {
@@ -134,7 +103,7 @@
 @layer utilities {
   .glass-card {
     @apply backdrop-blur-sm border border-white/[0.08] rounded-lg;
-    background: oklch(0.235 0.014 264 / 80%);
+    background: var(--card);
   }
 }
 

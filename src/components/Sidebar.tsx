@@ -23,7 +23,7 @@ export function Sidebar() {
   return (
     <aside
       className="flex w-48 flex-col gap-0.5 border-r border-white/[0.05] p-2"
-      style={{ background: "oklch(0.129 0.014 264)" }}
+      style={{ background: "var(--sidebar)" }}
     >
       {navItems.map(({ view, label, icon: Icon }) => (
         <button
@@ -37,7 +37,7 @@ export function Sidebar() {
           )}
           style={
             activeView === view
-              ? { background: "oklch(0.704 0.14 181 / 10%)" }
+              ? { background: "var(--sidebar-accent)" }
               : undefined
           }
         >

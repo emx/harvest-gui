@@ -32,7 +32,7 @@ export function StatusBar() {
 
   return (
     <footer className="flex h-7 items-center justify-between border-t border-white/[0.05] px-4 text-xs font-mono"
-      style={{ background: "oklch(0.129 0.014 264)" }}
+      style={{ background: "var(--sidebar)" }}
     >
       <div className="flex items-center gap-1.5">
         <span
@@ -41,7 +41,7 @@ export function StatusBar() {
           }`}
         />
         <span className="text-slate-500">
-          {hasConfig ? "Connected" : "Disconnected"}
+          {hasConfig ? "Configured" : "Not Configured"}
         </span>
       </div>
 
