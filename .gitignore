@@ -61,3 +61,4 @@ logs/
 .jdev/git-audit.log.old
 pytest-of-*/
 .claude/settings.local.json
+docs/staging/
