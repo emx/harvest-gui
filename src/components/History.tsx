@@ -30,7 +30,7 @@ function DetailPanel({
 
   return (
     <div className="w-80 shrink-0 border-l border-white/[0.05] overflow-y-auto"
-      style={{ background: "oklch(0.235 0.014 264 / 60%)", backdropFilter: "blur(8px)" }}
+      style={{ background: "var(--card-panel)", backdropFilter: "blur(8px)" }}
     >
       <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
         <h3 className="text-sm font-medium font-mono text-teal-400 truncate max-w-[220px]">

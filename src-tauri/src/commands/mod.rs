@@ -192,9 +192,11 @@ pub struct DiskUsage {
 #[cfg(unix)]
 #[tauri::command]
 pub fn get_disk_usage() -> Result<DiskUsage, String> {
+    use std::os::unix::ffi::OsStrExt;
     let dir = canopy_dir()?;
-    let path_cstr = std::ffi::CString::new(dir.to_string_lossy().as_bytes())
-        .map_err(|e| format!("Invalid path: {}", e))?;
+    let bytes = dir.as_os_str().as_bytes();
+    let path_cstr = std::ffi::CString::new(bytes)
+        .map_err(|_| "CANOPY_LOCAL_DIR contains a null byte".to_string())?;
     unsafe {
         let mut stat: libc::statvfs = std::mem::zeroed();
         if libc::statvfs(path_cstr.as_ptr(), &mut stat) != 0 {
@@ -209,6 +211,37 @@ pub fn get_disk_usage() -> Result<DiskUsage, String> {
             used_bytes: used,
         })
     }
+}
+
+#[cfg(windows)]
+#[tauri::command]
+pub fn get_disk_usage() -> Result<DiskUsage, String> {
+    let dir = canopy_dir()?;
+    let path_str = dir
+        .to_str()
+        .ok_or_else(|| "CANOPY_LOCAL_DIR is not valid UTF-8".to_string())?;
+    // Use GetDiskFreeSpaceExW via windows-sys
+    use std::os::windows::ffi::OsStrExt;
+    let wide: Vec<u16> = dir.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
+    let mut free_bytes: u64 = 0;
+    let mut total_bytes: u64 = 0;
+    let mut total_free: u64 = 0;
+    let ok = unsafe {
+        windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW(
+            wide.as_ptr(),
+            &mut free_bytes as *mut u64 as _,
+            &mut total_bytes as *mut u64 as _,
+            &mut total_free as *mut u64 as _,
+        )
+    };
+    if ok == 0 {
+        return Err(format!("Failed to get disk usage for {}", path_str));
+    }
+    Ok(DiskUsage {
+        total_bytes,
+        available_bytes: free_bytes,
+        used_bytes: total_bytes.saturating_sub(total_free),
+    })
 }
 
 #[tauri::command]

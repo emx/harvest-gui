@@ -99,10 +99,11 @@ function MetricCards() {
       )
     : null;
 
-  // Disk usage coloring
-  const diskPct = disk.data
-    ? (disk.data.used_bytes / disk.data.total_bytes) * 100
-    : null;
+  // Disk usage coloring — guard against total_bytes=0
+  const diskPct =
+    disk.data && disk.data.total_bytes > 0
+      ? (disk.data.used_bytes / disk.data.total_bytes) * 100
+      : null;
   const diskColor =
     diskPct === null
       ? "text-slate-400"
@@ -139,7 +140,11 @@ function MetricCards() {
       loading: collects.isLoading || disk.isLoading,
       error: collects.error || disk.error,
       icon: Database,
-      extra: diskPct !== null ? `${diskPct.toFixed(0)}% volume used` : null,
+      extra: diskPct !== null
+        ? `${diskPct.toFixed(0)}% volume used`
+        : disk.data
+          ? "Unknown"
+          : null,
       extraColor: diskColor,
     },
   ];

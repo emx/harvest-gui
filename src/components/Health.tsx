@@ -54,7 +54,10 @@ function HealthIndicators() {
   async function checkApi() {
     setApiLoading(true);
     try {
-      await invoke<string[]>("list_assets");
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), 10_000)
+      );
+      await Promise.race([invoke<string[]>("list_assets"), timeout]);
       setApiOk(true);
       setApiError("");
     } catch (e) {
