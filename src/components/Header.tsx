@@ -38,7 +38,7 @@ export function Header() {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-white/[0.08] px-4 bg-background">
+    <header className="relative flex h-14 items-center justify-between border-b border-white/[0.08] px-4 bg-background">
       <div className="flex items-center gap-2">
         <Satellite className="size-5 text-teal-500" />
         <span className="text-lg font-semibold text-slate-100">Harvest</span>
@@ -84,6 +84,7 @@ export function Header() {
           )}
         </Button>
       </div>
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-teal-500/50 to-transparent" />
     </header>
   );
 }

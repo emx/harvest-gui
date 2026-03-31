@@ -4,9 +4,7 @@ export type View = "dashboard" | "active" | "history" | "health" | "settings";
 
 export interface HarvestFlags {
   once: boolean;
-  useAria2: boolean;
   verbose: boolean;
-  parallel: number;
   include: string;
   exclude: string;
 }
@@ -16,14 +14,14 @@ interface AppState {
   setActiveView: (view: View) => void;
   harvestFlags: HarvestFlags;
   setHarvestFlags: (flags: Partial<HarvestFlags>) => void;
+  selectedCollectId: string | null;
+  setSelectedCollectId: (id: string | null) => void;
 }
 
 /** Serialize HarvestFlags for the Rust invoke call */
 export function serializeFlags(flags: HarvestFlags) {
   return {
     once: flags.once || null,
-    use_aria2: flags.useAria2 || null,
-    parallel: flags.parallel > 1 ? flags.parallel : null,
     include: flags.include || null,
     exclude: flags.exclude || null,
     verbose: flags.verbose || null,
@@ -35,9 +33,7 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveView: (view) => set({ activeView: view }),
   harvestFlags: {
     once: false,
-    useAria2: false,
     verbose: false,
-    parallel: 1,
     include: "",
     exclude: "",
   },
@@ -45,4 +41,6 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       harvestFlags: { ...state.harvestFlags, ...flags },
     })),
+  selectedCollectId: null,
+  setSelectedCollectId: (id) => set({ selectedCollectId: id }),
 }));

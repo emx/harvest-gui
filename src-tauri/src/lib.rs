@@ -15,6 +15,8 @@ pub fn run() {
             commands::get_config,
             commands::tail_log,
             commands::list_assets,
+            commands::get_disk_usage,
+            commands::check_canopy_dir,
             commands::process::start_harvest,
             commands::process::stop_harvest,
             commands::process::harvest_status,

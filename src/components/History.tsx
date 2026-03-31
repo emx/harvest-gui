@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowUpDown, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { useProcessed, useCollectFiles, type CollectEntry } from "@/queries";
 import { formatDate, formatBytes } from "@/lib/format";
+import { useAppStore } from "@/store";
 
 type SortKey = "id" | "date";
 type SortDir = "asc" | "desc";
@@ -29,37 +29,39 @@ function DetailPanel({
   const entry = collects?.find((c) => c.collect_id === collectId);
 
   return (
-    <Card className="glass-card mt-4">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium font-mono text-slate-200">
+    <div className="w-80 shrink-0 border-l border-white/[0.05] overflow-y-auto"
+      style={{ background: "oklch(0.235 0.014 264 / 60%)", backdropFilter: "blur(8px)" }}
+    >
+      <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
+        <h3 className="text-sm font-medium font-mono text-teal-400 truncate max-w-[220px]">
           {collectId}
-        </CardTitle>
+        </h3>
         <Button variant="ghost" size="icon-xs" onClick={onClose}>
           <X className="size-4" />
         </Button>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-4">
         {!entry || entry.files.length === 0 ? (
           <p className="text-sm text-slate-500">No files downloaded</p>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {entry.files.map((f) => (
               <div
                 key={f.name}
                 className="flex items-center justify-between text-sm"
               >
-                <span className="font-mono truncate max-w-[300px] text-slate-300">
+                <span className="font-mono truncate max-w-[160px] text-slate-300 text-xs">
                   {f.name}
                 </span>
-                <span className="font-mono text-slate-500">
+                <span className="font-mono text-slate-500 text-xs">
                   {formatBytes(f.size)}
                 </span>
               </div>
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -69,7 +71,14 @@ export function History() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectedCollectId = useAppStore((s) => s.selectedCollectId);
+  const setSelectedCollectId = useAppStore((s) => s.setSelectedCollectId);
+
+  // Clear selection when leaving the view
+  useEffect(() => {
+    return () => setSelectedCollectId(null);
+  }, [setSelectedCollectId]);
 
   const entries = useMemo(() => {
     if (!processed.data) return [];
@@ -118,8 +127,8 @@ export function History() {
   }
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-4 p-6 pb-4">
         <h2 className="text-lg font-semibold text-slate-100">History</h2>
         <input
           type="text"
@@ -130,75 +139,81 @@ export function History() {
         />
       </div>
 
-      <div className="rounded-md border border-white/[0.08] glass-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-white/[0.05] hover:bg-transparent">
-              <TableHead>
-                <button
-                  className="flex items-center gap-1 text-xs font-semibold tracking-wider uppercase text-slate-400"
-                  onClick={() => toggleSort("id")}
-                >
-                  Collect ID
-                  <ArrowUpDown className="size-3" />
-                </button>
-              </TableHead>
-              <TableHead>
-                <button
-                  className="flex items-center gap-1 text-xs font-semibold tracking-wider uppercase text-slate-400"
-                  onClick={() => toggleSort("date")}
-                >
-                  Processed Date
-                  <ArrowUpDown className="size-3" />
-                </button>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-center text-slate-500"
-                >
-                  {search
-                    ? "No matching collects"
-                    : "No processed collects yet"}
-                </TableCell>
+      <div className="flex flex-1 overflow-hidden px-6 pb-6 gap-0">
+        <div className={`flex-1 overflow-y-auto rounded-md border border-white/[0.08] glass-card ${selectedCollectId ? "rounded-r-none border-r-0" : ""}`}>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/[0.05] hover:bg-transparent">
+                <TableHead>
+                  <button
+                    className="flex items-center gap-1 text-xs font-semibold tracking-wider uppercase text-slate-400"
+                    onClick={() => toggleSort("id")}
+                  >
+                    Collect ID
+                    <ArrowUpDown className="size-3" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    className="flex items-center gap-1 text-xs font-semibold tracking-wider uppercase text-slate-400"
+                    onClick={() => toggleSort("date")}
+                  >
+                    Processed Date
+                    <ArrowUpDown className="size-3" />
+                  </button>
+                </TableHead>
               </TableRow>
-            ) : (
-              entries.map((e) => (
-                <TableRow
-                  key={e.id}
-                  className={`cursor-pointer border-white/[0.03] transition-colors ${
-                    selectedId === e.id
-                      ? "bg-teal-500/10"
-                      : "hover:bg-white/[0.03]"
-                  }`}
-                  onClick={() =>
-                    setSelectedId(selectedId === e.id ? null : e.id)
-                  }
-                >
-                  <TableCell className="font-mono text-sm text-slate-300">
-                    {e.id}
-                  </TableCell>
-                  <TableCell className="text-sm font-mono text-slate-400">
-                    {formatDate(e.ts)}
+            </TableHeader>
+            <TableBody>
+              {entries.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={2}
+                    className="text-center text-slate-500"
+                  >
+                    {search
+                      ? "No matching collects"
+                      : "No processed collects yet"}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                entries.map((e, i) => (
+                  <TableRow
+                    key={e.id}
+                    className={`cursor-pointer border-white/[0.03] transition-colors ${
+                      selectedCollectId === e.id
+                        ? "bg-teal-500/10"
+                        : i % 2 === 1
+                          ? "bg-white/[0.02] hover:bg-white/[0.04]"
+                          : "hover:bg-white/[0.03]"
+                    }`}
+                    onClick={() =>
+                      setSelectedCollectId(
+                        selectedCollectId === e.id ? null : e.id
+                      )
+                    }
+                  >
+                    <TableCell className="font-mono text-sm text-slate-300">
+                      {e.id}
+                    </TableCell>
+                    <TableCell className="text-sm font-mono text-slate-400">
+                      {formatDate(e.ts)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-      {selectedId && (
-        <DetailPanel
-          collectId={selectedId}
-          collects={collects.data}
-          onClose={() => setSelectedId(null)}
-        />
-      )}
+        {selectedCollectId && (
+          <DetailPanel
+            collectId={selectedCollectId}
+            collects={collects.data}
+            onClose={() => setSelectedCollectId(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }

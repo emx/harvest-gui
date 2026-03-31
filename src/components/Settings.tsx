@@ -13,7 +13,7 @@ function ConfigDisplay() {
     return <p className="text-sm text-red-400">{error.message}</p>;
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader>
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
           Environment Configuration
@@ -66,7 +66,7 @@ function FlagEditor() {
   const setHarvestFlags = useAppStore((s) => s.setHarvestFlags);
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader>
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
           Harvest Flag Defaults
@@ -86,33 +86,11 @@ function FlagEditor() {
           <label className="flex items-center gap-2 text-sm text-slate-300">
             <input
               type="checkbox"
-              checked={harvestFlags.useAria2}
-              onChange={(e) => setHarvestFlags({ useAria2: e.target.checked })}
-              className="accent-teal-500"
-            />
-            --use-aria2
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
-            <input
-              type="checkbox"
               checked={harvestFlags.verbose}
               onChange={(e) => setHarvestFlags({ verbose: e.target.checked })}
               className="accent-teal-500"
             />
             --verbose
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
-            --parallel
-            <input
-              type="number"
-              min={1}
-              max={32}
-              value={harvestFlags.parallel}
-              onChange={(e) =>
-                setHarvestFlags({ parallel: parseInt(e.target.value) || 1 })
-              }
-              className="h-7 w-16 rounded border border-white/[0.08] bg-white/[0.03] px-2 text-sm text-slate-200"
-            />
           </label>
         </div>
 
@@ -156,7 +134,7 @@ function FlagEditor() {
 
 function AppInfo() {
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader>
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
           App Info

@@ -65,3 +65,25 @@ export function useTailLog(lines: number = 100) {
   });
 }
 
+export interface DiskUsage {
+  total_bytes: number;
+  available_bytes: number;
+  used_bytes: number;
+}
+
+export function useDiskUsage() {
+  return useQuery({
+    queryKey: ["diskUsage"],
+    queryFn: () => invoke<DiskUsage>("get_disk_usage"),
+    staleTime: 30_000,
+  });
+}
+
+export function useCanopyDirCheck() {
+  return useQuery({
+    queryKey: ["canopyDirCheck"],
+    queryFn: () => invoke<boolean>("check_canopy_dir"),
+    staleTime: 30_000,
+  });
+}
+

@@ -45,7 +45,10 @@ export function StatusBar() {
         </span>
       </div>
 
-      <div className="text-slate-500">
+      <div className="flex items-center gap-1.5 text-slate-500">
+        {running && (
+          <span className="inline-block size-1.5 rounded-full bg-teal-500 animate-pulse" />
+        )}
         Harvest: {running ? `Running (${elapsed || "0m 00s"})` : "Stopped"}
       </div>
 

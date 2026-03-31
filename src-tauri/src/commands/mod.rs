@@ -181,3 +181,41 @@ pub fn list_assets() -> Result<Vec<String>, String> {
     let stdout = String::from_utf8_lossy(&output.stdout);
     Ok(stdout.lines().map(|s| s.to_string()).collect())
 }
+
+#[derive(Serialize)]
+pub struct DiskUsage {
+    pub total_bytes: u64,
+    pub available_bytes: u64,
+    pub used_bytes: u64,
+}
+
+#[cfg(unix)]
+#[tauri::command]
+pub fn get_disk_usage() -> Result<DiskUsage, String> {
+    let dir = canopy_dir()?;
+    let path_cstr = std::ffi::CString::new(dir.to_string_lossy().as_bytes())
+        .map_err(|e| format!("Invalid path: {}", e))?;
+    unsafe {
+        let mut stat: libc::statvfs = std::mem::zeroed();
+        if libc::statvfs(path_cstr.as_ptr(), &mut stat) != 0 {
+            return Err(format!("Failed to get disk usage for {}", dir.display()));
+        }
+        let total = stat.f_blocks as u64 * stat.f_frsize as u64;
+        let available = stat.f_bavail as u64 * stat.f_frsize as u64;
+        let used = total.saturating_sub(stat.f_bfree as u64 * stat.f_frsize as u64);
+        Ok(DiskUsage {
+            total_bytes: total,
+            available_bytes: available,
+            used_bytes: used,
+        })
+    }
+}
+
+#[tauri::command]
+pub fn check_canopy_dir() -> Result<bool, String> {
+    let dir = canopy_dir()?;
+    match fs::metadata(&dir) {
+        Ok(m) => Ok(m.is_dir()),
+        Err(_) => Ok(false),
+    }
+}

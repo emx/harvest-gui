@@ -75,8 +75,6 @@ fn now_iso() -> String {
 #[derive(Deserialize)]
 pub struct HarvestFlags {
     pub once: Option<bool>,
-    pub use_aria2: Option<bool>,
-    pub parallel: Option<u32>,
     pub include: Option<String>,
     pub exclude: Option<String>,
     pub verbose: Option<bool>,
@@ -118,12 +116,6 @@ pub fn start_harvest(
 
     if flags.once.unwrap_or(false) {
         cmd.arg("--once");
-    }
-    if flags.use_aria2.unwrap_or(false) {
-        cmd.arg("--use-aria2");
-    }
-    if let Some(p) = flags.parallel {
-        cmd.arg("--parallel").arg(p.to_string());
     }
     if let Some(ref inc) = flags.include {
         cmd.arg("--include").arg(inc);

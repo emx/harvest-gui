@@ -1,9 +1,11 @@
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { useEffect } from "react";
 import { CheckCircle2, HardDrive, Database } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProcessed, useLastPoll, useCollectFiles, useConfig } from "@/queries";
+import { useProcessed, useLastPoll, useCollectFiles, useConfig, useDiskUsage } from "@/queries";
 import { formatRelativeTime, formatBytes } from "@/lib/format";
+import { useAppStore } from "@/store";
 
 function ErrorCard({ error }: { error: Error }) {
   return <p className="text-sm text-red-400">{error.message}</p>;
@@ -34,13 +36,25 @@ function RadarSweep({ active }: { active: boolean }) {
   );
 }
 
+function AnimatedNumber({ value }: { value: number }) {
+  const motionVal = useMotionValue(0);
+  const rounded = useTransform(motionVal, (v) => Math.round(v));
+
+  useEffect(() => {
+    const controls = animate(motionVal, value, { duration: 0.6 });
+    return controls.stop;
+  }, [value, motionVal]);
+
+  return <motion.span>{rounded}</motion.span>;
+}
+
 function PollStatus() {
   const { data, isLoading, error } = useLastPoll();
 
   if (isLoading) return <Skeleton className="h-20 w-full" />;
   if (error)
     return (
-      <Card className="glass-card">
+      <Card className="glass-card border-t-2 border-t-teal-500/40">
         <CardContent className="pt-6">
           <ErrorCard error={error} />
         </CardContent>
@@ -53,7 +67,7 @@ function PollStatus() {
     : false;
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardContent className="flex items-center gap-4 pt-6">
         <RadarSweep active={isRecent} />
         <div>
@@ -72,22 +86,38 @@ function PollStatus() {
 function MetricCards() {
   const processed = useProcessed();
   const collects = useCollectFiles();
+  const disk = useDiskUsage();
 
   const processedCount = processed.data
     ? Object.keys(processed.data).length
     : null;
   const diskCount = collects.data?.length ?? null;
-  const diskUsage = collects.data
+  const harvestSize = collects.data
     ? collects.data.reduce(
         (sum, c) => sum + c.files.reduce((s, f) => s + f.size, 0),
         0
       )
     : null;
 
+  // Disk usage coloring
+  const diskPct = disk.data
+    ? (disk.data.used_bytes / disk.data.total_bytes) * 100
+    : null;
+  const diskColor =
+    diskPct === null
+      ? "text-slate-400"
+      : diskPct > 90
+        ? "text-red-400"
+        : diskPct > 70
+          ? "text-amber-400"
+          : "text-teal-400";
+
   const metrics = [
     {
       label: "Processed",
       value: processedCount,
+      displayValue: processedCount !== null ? String(processedCount) : null,
+      numericValue: processedCount,
       loading: processed.isLoading,
       error: processed.error,
       icon: CheckCircle2,
@@ -95,16 +125,22 @@ function MetricCards() {
     {
       label: "On Disk",
       value: diskCount,
+      displayValue: diskCount !== null ? String(diskCount) : null,
+      numericValue: diskCount,
       loading: collects.isLoading,
       error: collects.error,
       icon: HardDrive,
     },
     {
       label: "Disk Usage",
-      value: diskUsage !== null ? formatBytes(diskUsage) : null,
-      loading: collects.isLoading,
-      error: collects.error,
+      value: harvestSize !== null ? formatBytes(harvestSize) : null,
+      displayValue: harvestSize !== null ? formatBytes(harvestSize) : null,
+      numericValue: null,
+      loading: collects.isLoading || disk.isLoading,
+      error: collects.error || disk.error,
       icon: Database,
+      extra: diskPct !== null ? `${diskPct.toFixed(0)}% volume used` : null,
+      extraColor: diskColor,
     },
   ];
 
@@ -117,7 +153,7 @@ function MetricCards() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, delay: i * 0.05 }}
         >
-          <Card className="glass-card">
+          <Card className="glass-card border-t-2 border-t-teal-500/40">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2 mb-2">
                 <m.icon className="size-4 text-teal-500" />
@@ -130,9 +166,20 @@ function MetricCards() {
               ) : m.error ? (
                 <ErrorCard error={m.error} />
               ) : (
-                <p className="text-3xl font-bold text-slate-100">
-                  {m.value ?? 0}
-                </p>
+                <>
+                  <p className="text-3xl font-bold text-slate-100">
+                    {m.numericValue !== null ? (
+                      <AnimatedNumber value={m.numericValue} />
+                    ) : (
+                      (m.displayValue ?? 0)
+                    )}
+                  </p>
+                  {"extra" in m && m.extra && (
+                    <p className={`text-xs mt-1 font-mono ${m.extraColor}`}>
+                      {m.extra}
+                    </p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -144,11 +191,13 @@ function MetricCards() {
 
 function RecentActivity() {
   const { data, isLoading, error } = useProcessed();
+  const setActiveView = useAppStore((s) => s.setActiveView);
+  const setSelectedCollectId = useAppStore((s) => s.setSelectedCollectId);
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
   if (error)
     return (
-      <Card className="glass-card">
+      <Card className="glass-card border-t-2 border-t-teal-500/40">
         <CardContent className="pt-6">
           <ErrorCard error={error} />
         </CardContent>
@@ -163,8 +212,13 @@ function RecentActivity() {
         .slice(0, 5)
     : [];
 
+  function handleClick(collectId: string) {
+    setSelectedCollectId(collectId);
+    setActiveView("history");
+  }
+
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader>
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
           Recent Activity
@@ -178,7 +232,8 @@ function RecentActivity() {
             {entries.map(([id, ts]) => (
               <div
                 key={id}
-                className="flex items-center justify-between rounded-md bg-white/[0.03] px-3 py-2"
+                onClick={() => handleClick(id)}
+                className="flex items-center justify-between rounded-md bg-white/[0.03] px-3 py-2 cursor-pointer hover:bg-white/[0.06] transition-colors"
               >
                 <span className="text-sm font-mono truncate max-w-[200px] text-slate-300">
                   {id}
@@ -197,11 +252,12 @@ function RecentActivity() {
 
 function ConfigSummary() {
   const { data, isLoading, error } = useConfig();
+  const setActiveView = useAppStore((s) => s.setActiveView);
 
   if (isLoading) return <Skeleton className="h-24 w-full" />;
   if (error)
     return (
-      <Card className="glass-card">
+      <Card className="glass-card border-t-2 border-t-teal-500/40">
         <CardContent className="pt-6">
           <ErrorCard error={error} />
         </CardContent>
@@ -214,7 +270,10 @@ function ConfigSummary() {
   );
 
   return (
-    <Card className="glass-card">
+    <Card
+      className="glass-card border-t-2 border-t-teal-500/40 cursor-pointer hover:bg-white/[0.02] transition-colors"
+      onClick={() => setActiveView("settings")}
+    >
       <CardHeader>
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
           Configuration

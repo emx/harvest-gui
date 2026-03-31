@@ -1,77 +1,118 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { CheckCircle, XCircle, RefreshCw, Search } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTailLog } from "@/queries";
+import { useHarvestStatus, useTailLog, useCanopyDirCheck } from "@/queries";
 import { AssetFetcher } from "@/components/AssetFetcher";
 
-export function Health() {
+function HealthIndicator({
+  label,
+  ok,
+  loading,
+  statusText,
+}: {
+  label: string;
+  ok: boolean;
+  loading?: boolean;
+  statusText: string;
+}) {
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="text-lg font-semibold text-slate-100">Health</h2>
-      <ConnectionTest />
-      <LogViewer />
-      <AssetFetcher />
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
+      <CardContent className="flex items-center gap-3 pt-5 pb-4">
+        {loading ? (
+          <Skeleton className="size-3 rounded-full" />
+        ) : (
+          <span
+            className={`inline-block size-3 rounded-full ${
+              ok ? "bg-teal-500" : "bg-red-400"
+            }`}
+          />
+        )}
+        <div>
+          <p className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+            {label}
+          </p>
+          <p className={`text-sm ${ok ? "text-teal-400" : "text-red-400"}`}>
+            {loading ? "Checking..." : statusText}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function HealthIndicators() {
+  const { data: harvestStatus, isLoading: harvestLoading } = useHarvestStatus();
+  const { data: canopyOk, isLoading: canopyLoading } = useCanopyDirCheck();
+
+  const [apiOk, setApiOk] = useState<boolean | null>(null);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
+
+  async function checkApi() {
+    setApiLoading(true);
+    try {
+      await invoke<string[]>("list_assets");
+      setApiOk(true);
+      setApiError("");
+    } catch (e) {
+      setApiOk(false);
+      setApiError(`${e}`);
+    } finally {
+      setApiLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    checkApi();
+  }, []);
+
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      <HealthIndicator
+        label="Daemon Running"
+        ok={harvestStatus?.running ?? false}
+        loading={harvestLoading}
+        statusText={harvestStatus?.running ? "Active" : "Stopped"}
+      />
+      <HealthIndicator
+        label="Canopy Reachable"
+        ok={canopyOk ?? false}
+        loading={canopyLoading}
+        statusText={canopyOk ? "Directory accessible" : "Not accessible"}
+      />
+      <div className="relative">
+        <HealthIndicator
+          label="Canopy API"
+          ok={apiOk ?? false}
+          loading={apiLoading}
+          statusText={apiOk ? "OK" : apiError || "Failed"}
+        />
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={checkApi}
+          disabled={apiLoading}
+          className="absolute top-3 right-3"
+        >
+          <RefreshCw
+            className={`size-3.5 text-slate-500 ${apiLoading ? "animate-spin" : ""}`}
+          />
+        </Button>
+      </div>
     </div>
   );
 }
 
-function ConnectionTest() {
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">(
-    "idle"
-  );
-  const [message, setMessage] = useState("");
-
-  async function test() {
-    setStatus("loading");
-    try {
-      await invoke<string[]>("list_assets");
-      setStatus("ok");
-      setMessage("Connected to Canopy API");
-    } catch (e) {
-      setStatus("error");
-      setMessage(`${e}`);
-    }
-  }
-
-  return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
-          Connection Test
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={test}
-          disabled={status === "loading"}
-          className="border-white/[0.08] hover:bg-white/[0.03]"
-        >
-          <RefreshCw
-            className={`size-3.5 ${status === "loading" ? "animate-spin" : ""}`}
-            data-icon="inline-start"
-          />
-          {status === "loading" ? "Testing..." : "Test Connection"}
-        </Button>
-        {status === "ok" && (
-          <span className="flex items-center gap-1.5 text-sm text-teal-400">
-            <CheckCircle className="size-4" />
-            {message}
-          </span>
-        )}
-        {status === "error" && (
-          <span className="flex items-center gap-1.5 text-sm text-red-400">
-            <XCircle className="size-4" />
-            {message}
-          </span>
-        )}
-      </CardContent>
-    </Card>
-  );
+function getLogLineColor(line: string): string {
+  const upper = line.toUpperCase();
+  if (upper.includes("ERROR") || upper.includes("CRITICAL"))
+    return "text-red-400";
+  if (upper.includes("WARNING")) return "text-amber-500";
+  if (upper.includes("DEBUG")) return "text-slate-500";
+  return "text-slate-300";
 }
 
 function LogViewer() {
@@ -83,7 +124,7 @@ function LogViewer() {
   );
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
           Log Viewer
@@ -112,7 +153,7 @@ function LogViewer() {
               </span>
             ) : (
               filtered.map((line, i) => (
-                <div key={i} className="text-slate-300">
+                <div key={i} className={getLogLineColor(line)}>
                   {line}
                 </div>
               ))
@@ -121,5 +162,16 @@ function LogViewer() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export function Health() {
+  return (
+    <div className="space-y-6 p-6">
+      <h2 className="text-lg font-semibold text-slate-100">Health</h2>
+      <HealthIndicators />
+      <LogViewer />
+      <AssetFetcher />
+    </div>
   );
 }

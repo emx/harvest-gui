@@ -33,10 +33,10 @@ export function AssetFetcher({
   }
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
-          Available Assets
+          Fetch List of Available Assets
         </CardTitle>
         <Button
           variant="outline"
@@ -46,7 +46,7 @@ export function AssetFetcher({
           className="border-white/[0.08] hover:bg-white/[0.03]"
         >
           <List className="size-3.5" data-icon="inline-start" />
-          {loading ? "Loading..." : "Fetch Assets"}
+          {loading ? "Loading..." : "Fetch Assets List"}
         </Button>
       </CardHeader>
       <CardContent>
