@@ -37,6 +37,7 @@
         "api.github.com",
         "api.x.ai",
         "api.openai.com",
+        "*.crates.io",
         "localhost"
       ]
     },
