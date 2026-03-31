@@ -1,0 +1,124 @@
+{
+  "permissions": {
+    "mode": "auto",
+    "allow": [
+      "*"
+    ],
+    "additionalDirectories": [
+      "~/projects"
+    ],
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(~/.bashrc)",
+      "Read(~/.zshrc)",
+      "Read(~/.bash_profile)",
+      "Read(~/.profile)",
+      "Write(~/.bashrc)",
+      "Write(~/.zshrc)",
+      "Edit(~/.bashrc)",
+      "Edit(~/.zshrc)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "enableWeakerNetworkIsolation": true,
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "*.githubusercontent.com",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "api.github.com",
+        "api.x.ai",
+        "api.openai.com",
+        "localhost"
+      ]
+    },
+    "excludedCommands": [
+      "gh:*",
+      "git:*"
+    ]
+  },
+  "mcpServers": {
+    "jdev-coord": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "jdev.mcp_coord.mcp_server"]
+    },
+    "sage": {
+      "command": "/Applications/SAGE.app/Contents/MacOS/sage-gui",
+      "args": ["mcp"],
+      "env": {
+        "SAGE_HOME": "/Users/emx/.sage"
+      }
+    }
+  },
+  "env": {
+    "CLAUDE_CODE_TMPDIR": "/Users/emx/projects/.claude-tmp",
+    "XDG_CACHE_HOME": "/Users/emx/projects/.claude-tmp"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "cleanupPeriodDays": 365,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jdev hook session-start"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jdev hook pre-tool-use"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jdev hook post-tool-use"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jdev hook pre-compact"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jdev mark-blocked 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "jdev hook stop"
+          }
+        ]
+      }
+    ]
+  }
+}

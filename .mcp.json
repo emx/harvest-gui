@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "jdev-coord": {
+      "type": "stdio",
+      "command": "jdev",
+      "args": [
+        "mcp-serve"
+      ]
+    }
+  }
+}

@@ -1,0 +1,80 @@
+name: harvest-gui
+version: 0.1.0
+language: null
+package_manager: null
+use_mcp_backend: true
+commands:
+  test: uv run pytest tests/ -v
+  lint: uv run ruff check .
+  format: uv run ruff format .
+  typecheck: uv run mypy . --ignore-missing-imports
+  security: uv run bandit -r . -c pyproject.toml
+progress:
+  backend: tmux
+  tools:
+  - name: pytest
+    pattern: PASSED|FAILED|ERROR
+  - name: ruff
+    pattern: Found \d+ error
+tabs:
+- name: Main
+  icon: "\U0001F3E0"
+  color: '#2850C8'
+- name: harvest-gui-CC
+  icon: "\U0001F916"
+  color: '#28B428'
+  background_color: '#0D1117'
+  foreground_color: '#7EE787'
+  command: claude --dangerously-skip-permissions --append-system-prompt-file ~/.jdev/methodology/prompts/CC_SYSTEM_PROMPT.md
+  initial_prompt: /cc-start
+- name: harvest-gui-CA
+  icon: "\U0001F9D0"
+  color: '#B428B4'
+  command: claude --dangerously-skip-permissions --append-system-prompt-file ~/.jdev/methodology/prompts/CA_SYSTEM_PROMPT.md
+  initial_prompt: /ca-start
+- name: harvest-gui-CD
+  icon: "\U0001F3AF"
+  color: '#2896C8'
+  background_color: '#1A1B2E'
+  foreground_color: '#B0C4DE'
+  command: claude --dangerously-skip-permissions --append-system-prompt-file ~/.jdev/methodology/prompts/CD_SYSTEM_PROMPT.md
+  initial_prompt: /cd-start
+- name: harvest-gui-CR
+  icon: "\U0001F50D"
+  color: '#C8A028'
+  command: claude --dangerously-skip-permissions --append-system-prompt-file ~/.jdev/methodology/prompts/CR_SYSTEM_PROMPT.md
+  initial_prompt: /cr-start
+- name: Adm
+  icon: "\u2699"
+  color: '#C85028'
+  command: jdev logs
+forbidden_commands:
+- pattern: rm -rf /
+  reason: System safety
+- pattern: git push --force
+  reason: History safety
+- pattern: jdev stop
+  reason: Kills dev environment
+docs:
+  sessions: docs/sessions/
+  design: docs/design/
+  audits: docs/audits/
+scaffolding_hashes:
+  .claude/agents/CONTENTS.md: 3b69a7d30b3b3a6936e265e0991dcf9452461dfb807fc54fc58979e1be9a9f80
+  .claude/skills/cd-preflight/SKILL.md: 32a4aefe046453484c35242c6b0eafe4657fd0e514b56796d6cf7f388219bcf3
+  .claude/skills/gemini-review/SKILL.md: 385d29839f882ffa86d6b43bbde03af2d191953717f9ac516360c8229f51f782
+  .claude/skills/grok-review/SKILL.md: 65806f69cfb339fa866f990c7a14260f5c7aed66cf0ca13569370feb53449f63
+  .claude/skills/handoff-protocol/SKILL.md: fd27e82df346874b62d4ca4fbf74509c1dbb204ecadadbedbdd2f5a1cab11b89
+  .claude/skills/pre-build-readiness/SKILL.md: 279876644ba0ae86ece1614c7d9238d06e6b0340b8d569c509da43e4e050ceb9
+  .claude/skills/project-health/SKILL.md: c3dbfeba9bfcd7b52df02464106bc03c1f8da4f29bcd1424080bff53ff9d1a6f
+  .claude/skills/python-standards/SKILL.md: dab44232cd535ebf8f53034713ba870361dcfb5f4ed0dc2b609c8f1e40734a7d
+  .claude/skills/software-standards/SKILL.md: 5bf1defa8a0345e0166efad33a1bced3df2e197ea4e26e42a86e0b33af03a7a4
+  .claude/commands/ca-start.md: 70723b19e287c91b01c8a01cad43b6e7ccf6729ac5d9b39397f30ea2a2c13ae4
+  .claude/commands/cc-start.md: 500efb1c109db813cd65f96c2eacdb9f309adaddaba1fc67d642126484bf8440
+  .claude/commands/cd-start.md: 413dbd9603c52d072a6daf453ba864a8a3f3436885ae4703a47d7010a2f54717
+  .claude/commands/cr-start.md: 75235ca6871dfed6c576d93a297a36f435bf06de0dd8d761e2803f87008bceef
+  .claude/workflows/feature-development/WORKFLOW.md: a2e189cf7a1c43b7a2b2a2fa11efef0a69d76ffe9861f59cf56e442438a9ae36
+  .claude/workflows/feature-development/templates/ca-to-cc.md: c7ec1a91ad10a7ee309c343b230f95bcb5e1ce248a4ee5dee16e56fa43bd7b87
+  .claude/workflows/feature-development/templates/cd-to-ca.md: d868becc942f466edc0c9eab0c3f4ee5ca7ef20a11e8d451190e045b7b931433
+  .claude/workflows/solo-cc/WORKFLOW.md: 87e6730d3d866284f683d8ec579b0963aaf36f95491fe173eef082b752c27a84
+  .claude/workflows/solo-cc/templates/cd-to-cc.md: 3ee556ac641a54cc5b32788caadcff45bccf7df8c9eaf98b58cd18dcbaf6a70c

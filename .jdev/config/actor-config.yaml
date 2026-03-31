@@ -1,0 +1,41 @@
+# Multi-Actor Transport configuration
+#
+# Defines named actor sessions for the orchestrator.
+# Presence of this file triggers multi-actor mode.
+
+actors:
+  ca:
+    display_name: "Chief Architect"
+    aliases: ["ca", "chief-architect", "architect"]
+    role: architect
+    tmux_window: 2
+    enabled: true
+    env:
+      SAGE_IDENTITY_PATH: "~/.sage/identities/jdev-CA.key"
+
+  cc:
+    display_name: "Claude Code"
+    aliases: ["cc", "claude-code", "coder", "implementer"]
+    role: coder
+    tmux_window: 1
+    enabled: true
+    env:
+      SAGE_IDENTITY_PATH: "~/.sage/identities/jdev-CC.key"
+
+  cd:
+    display_name: "Claude Desktop"
+    aliases: ["cd", "claude-desktop", "orchestrator"]
+    role: orchestrator
+    tmux_window: 3
+    enabled: true
+    env:
+      SAGE_IDENTITY_PATH: "~/.sage/identities/jdev-CD.key"
+
+  cr:
+    display_name: "Chief Reviewer"
+    aliases: ["cr", "chief-reviewer", "reviewer"]
+    role: reviewer
+    tmux_window: 4
+    enabled: true
+    env:
+      SAGE_IDENTITY_PATH: "~/.sage/identities/jdev-CR.key"
