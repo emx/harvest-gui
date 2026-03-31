@@ -43,6 +43,12 @@ echo "Platform: $OS $ARCH"
 echo "Resources: $RESOURCES_DIR"
 echo ""
 
+# Safety guard: verify path before destructive rm -rf
+case "$RESOURCES_DIR" in
+    */src-tauri/resources) ;;
+    *) echo "ABORT: RESOURCES_DIR does not end with src-tauri/resources: $RESOURCES_DIR"; exit 1 ;;
+esac
+
 # Clean previous
 rm -rf "$RESOURCES_DIR"
 mkdir -p "$RESOURCES_DIR/bin"

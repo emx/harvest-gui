@@ -18,6 +18,12 @@ Write-Host "=== Harvest GUI Bundle Preparation (Windows) ==="
 Write-Host "Resources: $ResourcesDir"
 Write-Host ""
 
+# Safety guard: verify path before destructive removal
+if (-not $ResourcesDir.EndsWith("src-tauri\resources")) {
+    Write-Error "ABORT: ResourcesDir does not end with src-tauri\resources: $ResourcesDir"
+    exit 1
+}
+
 # Clean previous
 if (Test-Path $ResourcesDir) { Remove-Item -Recurse -Force $ResourcesDir }
 New-Item -ItemType Directory -Path "$ResourcesDir\bin" -Force | Out-Null
