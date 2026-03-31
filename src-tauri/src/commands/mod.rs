@@ -61,15 +61,21 @@ pub fn bundled_aria2c(app: &AppHandle) -> Option<PathBuf> {
     }
 }
 
-fn canopy_dir() -> Result<PathBuf, String> {
+fn canopy_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    // Read from saved config first, fall back to env var
+    if let Ok(cfg) = config::load_config(app.clone()) {
+        if !cfg.canopy_local_dir.is_empty() {
+            return Ok(PathBuf::from(cfg.canopy_local_dir));
+        }
+    }
     env::var("CANOPY_LOCAL_DIR")
         .map(PathBuf::from)
-        .map_err(|_| "CANOPY_LOCAL_DIR environment variable is not set".to_string())
+        .map_err(|_| "CANOPY_LOCAL_DIR is not configured. Set it in Settings.".to_string())
 }
 
 #[tauri::command]
-pub fn get_processed() -> Result<HashMap<String, String>, String> {
-    let path = canopy_dir()?.join(".harvest/processed_collects.json");
+pub fn get_processed(app: AppHandle) -> Result<HashMap<String, String>, String> {
+    let path = canopy_dir(&app)?.join(".harvest/processed_collects.json");
     let data = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
     serde_json::from_str(&data)
@@ -77,8 +83,8 @@ pub fn get_processed() -> Result<HashMap<String, String>, String> {
 }
 
 #[tauri::command]
-pub fn get_last_poll() -> Result<Value, String> {
-    let path = canopy_dir()?.join(".harvest/last_poll.json");
+pub fn get_last_poll(app: AppHandle) -> Result<Value, String> {
+    let path = canopy_dir(&app)?.join(".harvest/last_poll.json");
     let data = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
     serde_json::from_str(&data)
@@ -98,8 +104,8 @@ pub struct FileEntry {
 }
 
 #[tauri::command]
-pub fn list_collect_files() -> Result<Vec<CollectEntry>, String> {
-    let collects_dir = canopy_dir()?.join("collects");
+pub fn list_collect_files(app: AppHandle) -> Result<Vec<CollectEntry>, String> {
+    let collects_dir = canopy_dir(&app)?.join("collects");
     let entries = fs::read_dir(&collects_dir)
         .map_err(|e| format!("Failed to read {}: {}", collects_dir.display(), e))?;
 
@@ -138,9 +144,9 @@ pub fn list_collect_files() -> Result<Vec<CollectEntry>, String> {
 
 
 #[tauri::command]
-pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {
+pub fn tail_log(app: AppHandle, lines: Option<usize>) -> Result<Vec<String>, String> {
     let n = lines.unwrap_or(50);
-    let path = canopy_dir()?.join("harvest.log");
+    let path = canopy_dir(&app)?.join("harvest.log");
     let mut file = fs::File::open(&path)
         .map_err(|e| format!("Failed to open {}: {}", path.display(), e))?;
 
@@ -226,9 +232,9 @@ pub struct DiskUsage {
 
 #[cfg(unix)]
 #[tauri::command]
-pub fn get_disk_usage() -> Result<DiskUsage, String> {
+pub fn get_disk_usage(app: AppHandle) -> Result<DiskUsage, String> {
     use std::os::unix::ffi::OsStrExt;
-    let dir = canopy_dir()?;
+    let dir = canopy_dir(&app)?;
     let bytes = dir.as_os_str().as_bytes();
     let path_cstr = std::ffi::CString::new(bytes)
         .map_err(|_| "CANOPY_LOCAL_DIR contains a null byte".to_string())?;
@@ -250,8 +256,8 @@ pub fn get_disk_usage() -> Result<DiskUsage, String> {
 
 #[cfg(windows)]
 #[tauri::command]
-pub fn get_disk_usage() -> Result<DiskUsage, String> {
-    let dir = canopy_dir()?;
+pub fn get_disk_usage(app: AppHandle) -> Result<DiskUsage, String> {
+    let dir = canopy_dir(&app)?;
     let path_str = dir
         .to_str()
         .ok_or_else(|| "CANOPY_LOCAL_DIR is not valid UTF-8".to_string())?;
@@ -280,8 +286,8 @@ pub fn get_disk_usage() -> Result<DiskUsage, String> {
 }
 
 #[tauri::command]
-pub fn check_canopy_dir() -> Result<bool, String> {
-    let dir = canopy_dir()?;
+pub fn check_canopy_dir(app: AppHandle) -> Result<bool, String> {
+    let dir = canopy_dir(&app)?;
     match fs::metadata(&dir) {
         Ok(m) => Ok(m.is_dir()),
         Err(_) => Ok(false),
