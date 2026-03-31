@@ -6,12 +6,6 @@ export interface CollectEntry {
   files: { name: string; size: number }[];
 }
 
-export interface ConfigEntry {
-  name: string;
-  status: string;
-  value: string;
-}
-
 export interface ResolvedConfigEntry {
   name: string;
   status: string;
@@ -47,14 +41,6 @@ export function useCollectFiles() {
   return useQuery({
     queryKey: ["collectFiles"],
     queryFn: () => invoke<CollectEntry[]>("list_collect_files"),
-    staleTime: 30_000,
-  });
-}
-
-export function useConfig() {
-  return useQuery({
-    queryKey: ["config"],
-    queryFn: () => invoke<ConfigEntry[]>("get_config"),
     staleTime: 30_000,
   });
 }

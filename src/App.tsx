@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { StatusBar } from "@/components/StatusBar";
+import { ConfigGuard } from "@/components/ConfigGuard";
 import { Dashboard } from "@/components/Dashboard";
 import { History } from "@/components/History";
 import { Active } from "@/components/Active";
@@ -12,11 +13,21 @@ import { useAppStore, type View } from "@/store";
 import { useResolvedConfig } from "@/queries";
 import "./App.css";
 
+function guarded(Component: React.ComponentType) {
+  return function GuardedView() {
+    return (
+      <ConfigGuard>
+        <Component />
+      </ConfigGuard>
+    );
+  };
+}
+
 const views: Record<View, React.ComponentType> = {
-  dashboard: Dashboard,
-  active: Active,
-  history: History,
-  health: Health,
+  dashboard: guarded(Dashboard),
+  active: guarded(Active),
+  history: guarded(History),
+  health: guarded(Health),
   settings: Settings,
 };
 

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppConfig, useResolvedConfig, useHarvestStatus, type AppConfig } from "@/queries";
-import { useAppStore } from "@/store";
+import { useAppStore, serializeFlags } from "@/store";
 import { useQueryClient } from "@tanstack/react-query";
 
 function ConfigForm() {
@@ -64,7 +64,7 @@ function ConfigForm() {
   async function handleRestart() {
     try {
       await invoke("stop_harvest");
-      await invoke("start_harvest", { flags: { once: harvestFlags.once || null, include: harvestFlags.include || null, exclude: harvestFlags.exclude || null, verbose: harvestFlags.verbose || null } });
+      await invoke("start_harvest", { flags: serializeFlags(harvestFlags) });
       setNeedsRestart(false);
       queryClient.invalidateQueries({ queryKey: ["harvestStatus"] });
     } catch {

@@ -85,50 +85,6 @@ pub fn list_collect_files() -> Result<Vec<CollectEntry>, String> {
     Ok(result)
 }
 
-#[derive(Serialize)]
-pub struct ConfigEntry {
-    pub name: String,
-    pub status: String,
-    pub value: String,
-}
-
-#[tauri::command]
-pub fn get_config() -> Vec<ConfigEntry> {
-    let vars = [
-        "CANOPY_CLIENT_ID",
-        "CANOPY_CLIENT_SECRET",
-        "CANOPY_ORG_ID",
-        "CANOPY_LOCAL_DIR",
-        "CANOPY_MODE",
-    ];
-
-    vars.iter()
-        .map(|&name| match env::var(name) {
-            Ok(val) => {
-                let display_val = if name == "CANOPY_CLIENT_SECRET" {
-                    let last4: String = val.chars().rev().take(4).collect::<Vec<_>>().into_iter().rev().collect();
-                    if last4.is_empty() {
-                        "****".to_string()
-                    } else {
-                        format!("****{}", last4)
-                    }
-                } else {
-                    val
-                };
-                ConfigEntry {
-                    name: name.to_string(),
-                    status: "set".to_string(),
-                    value: display_val,
-                }
-            }
-            Err(_) => ConfigEntry {
-                name: name.to_string(),
-                status: "missing".to_string(),
-                value: String::new(),
-            },
-        })
-        .collect()
-}
 
 #[tauri::command]
 pub fn tail_log(lines: Option<usize>) -> Result<Vec<String>, String> {

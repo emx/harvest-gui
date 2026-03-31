@@ -144,8 +144,8 @@ pub fn get_resolved_config(app: AppHandle) -> Result<Vec<ResolvedConfigEntry>, S
         .collect())
 }
 
-pub fn get_resolved_env(app: &AppHandle) -> Result<Vec<(String, String)>, String> {
-    let config = load_config(app.clone())?;
+pub fn get_resolved_env(app: AppHandle) -> Result<Vec<(String, String)>, String> {
+    let config = load_config(app)?;
 
     let fields = [
         ("CANOPY_CLIENT_ID", config.canopy_client_id.as_str()),

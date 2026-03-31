@@ -12,7 +12,6 @@ pub fn run() {
             commands::get_processed,
             commands::get_last_poll,
             commands::list_collect_files,
-            commands::get_config,
             commands::tail_log,
             commands::list_assets,
             commands::get_disk_usage,

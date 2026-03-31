@@ -128,10 +128,10 @@ pub fn start_harvest(
     }
 
     // Inject resolved config values as env vars (config file overrides env vars)
-    if let Ok(env_vars) = super::config::get_resolved_env(&app) {
-        for (key, val) in env_vars {
-            cmd.env(&key, &val);
-        }
+    let env_vars = super::config::get_resolved_env(app.clone())
+        .map_err(|e| format!("Failed to load configuration: {}. Check Settings.", e))?;
+    for (key, val) in &env_vars {
+        cmd.env(key, val);
     }
 
     cmd.stdout(Stdio::piped());
