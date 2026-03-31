@@ -89,16 +89,16 @@ fi
 VENV_PIP="$RESOURCES_DIR/harvest-venv/bin/pip"
 VENV_PYTHON="$RESOURCES_DIR/harvest-venv/bin/python"
 
-echo ">>> Installing harvest..."
-# Try local install first (development), fall back to PyPI
-HARVEST_LOCAL="$HOME/projects/harvest"
-if [ -d "$HARVEST_LOCAL" ]; then
-    echo "    (from local: $HARVEST_LOCAL)"
-    "$VENV_PIP" install --quiet "$HARVEST_LOCAL"
-else
-    echo "    (from PyPI)"
-    "$VENV_PIP" install --quiet harvest
+if [ -z "${HARVEST_SOURCE:-}" ]; then
+    echo "ERROR: HARVEST_SOURCE is not set."
+    echo "  Set it to a local path or pip-installable specifier, e.g.:"
+    echo "    HARVEST_SOURCE=~/projects/harvest bash scripts/bundle.sh"
+    echo "    HARVEST_SOURCE=git+https://github.com/emx/harvest.git bash scripts/bundle.sh"
+    exit 1
 fi
+
+echo ">>> Installing harvest from: $HARVEST_SOURCE"
+"$VENV_PIP" install --quiet "$HARVEST_SOURCE"
 
 echo ">>> Verifying harvest installation..."
 "$VENV_PYTHON" -m harvest --help > /dev/null 2>&1 || {

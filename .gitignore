@@ -67,3 +67,4 @@ docs/staging/
 src-tauri/resources/python/
 src-tauri/resources/harvest-venv/
 src-tauri/resources/bin/
+.claude/

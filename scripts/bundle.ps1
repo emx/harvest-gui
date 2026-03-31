@@ -62,15 +62,16 @@ if ($DllFiles) {
 $VenvPip = "$ResourcesDir\harvest-venv\Scripts\pip.exe"
 $VenvPython = "$ResourcesDir\harvest-venv\Scripts\python.exe"
 
-Write-Host ">>> Installing harvest..."
-$HarvestLocal = "$env:USERPROFILE\projects\harvest"
-if (Test-Path $HarvestLocal) {
-    Write-Host "    (from local: $HarvestLocal)"
-    & $VenvPip install --quiet $HarvestLocal
-} else {
-    Write-Host "    (from PyPI)"
-    & $VenvPip install --quiet harvest
+if (-not $env:HARVEST_SOURCE) {
+    Write-Error "HARVEST_SOURCE is not set."
+    Write-Host "  Set it to a local path or pip-installable specifier, e.g.:"
+    Write-Host "    `$env:HARVEST_SOURCE='C:\projects\harvest'; .\scripts\bundle.ps1"
+    Write-Host "    `$env:HARVEST_SOURCE='git+https://github.com/emx/harvest.git'; .\scripts\bundle.ps1"
+    exit 1
 }
+
+Write-Host ">>> Installing harvest from: $env:HARVEST_SOURCE"
+& $VenvPip install --quiet $env:HARVEST_SOURCE
 
 Write-Host ">>> Verifying harvest installation..."
 & $VenvPython -m harvest --help | Out-Null
