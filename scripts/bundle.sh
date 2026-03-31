@@ -72,6 +72,20 @@ echo ">>> Python: $($PYTHON_BIN --version)"
 echo ">>> Creating venv..."
 "$PYTHON_BIN" -m venv "$RESOURCES_DIR/harvest-venv"
 
+# Copy libpython dylib into venv so the venv Python can find it
+# (venv Python's rpath is @executable_path/../lib)
+echo ">>> Copying libpython shared library into venv..."
+DYLIB_SRC="$RESOURCES_DIR/python/lib/libpython3.11.dylib"
+DYLIB_DST="$RESOURCES_DIR/harvest-venv/lib/"
+if [ -f "$DYLIB_SRC" ]; then
+    mkdir -p "$DYLIB_DST"
+    cp "$DYLIB_SRC" "$DYLIB_DST"
+    echo "    Copied libpython3.11.dylib to harvest-venv/lib/"
+elif [ "$OS" = "Darwin" ]; then
+    echo "WARNING: libpython3.11.dylib not found at $DYLIB_SRC"
+    echo "    The bundled Python may fail with dylib load errors"
+fi
+
 VENV_PIP="$RESOURCES_DIR/harvest-venv/bin/pip"
 VENV_PYTHON="$RESOURCES_DIR/harvest-venv/bin/python"
 
