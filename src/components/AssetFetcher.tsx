@@ -52,6 +52,7 @@ export function AssetFetcher({
           )}
           {loading ? "Loading..." : "Fetch Assets List"}
         </Button>
+        <span className="text-[10px] text-slate-500">Uses one API token (50/day limit)</span>
       </CardHeader>
       <CardContent>
         {error && <p className="text-sm text-red-400">{error}</p>}
