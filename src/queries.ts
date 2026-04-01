@@ -26,6 +26,7 @@ export function useProcessed() {
     queryKey: ["processed"],
     queryFn: () => invoke<Record<string, string>>("get_processed"),
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -34,6 +35,7 @@ export function useLastPoll() {
     queryKey: ["lastPoll"],
     queryFn: () => invoke<{ last_poll_ts: string }>("get_last_poll"),
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -42,6 +44,7 @@ export function useCollectFiles() {
     queryKey: ["collectFiles"],
     queryFn: () => invoke<CollectEntry[]>("list_collect_files"),
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -86,6 +89,7 @@ export function useDiskUsage() {
     queryKey: ["diskUsage"],
     queryFn: () => invoke<DiskUsage>("get_disk_usage"),
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -94,6 +98,7 @@ export function useCanopyDirCheck() {
     queryKey: ["canopyDirCheck"],
     queryFn: () => invoke<boolean>("check_canopy_dir"),
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 

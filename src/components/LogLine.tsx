@@ -8,9 +8,11 @@ interface LogLineProps {
 const HARVEST_RE =
   /^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+(DEBUG|INFO|WARNING|ERROR|CRITICAL)\s+(\S+)\s+[—-]\s+(.*)$/i;
 
-// simplelog format: "[YYYY-MM-DD HH:MM:SS LEVEL target] message"
+// simplelog formats:
+//   "HH:MM:SS [LEVEL] target: message"  (Config::default with time)
+//   "[YYYY-MM-DDTHH:MM:SS LEVEL target] message"  (custom config)
 const APP_RE =
-  /^\[(\d{4}-\d{2}-\d{2}T?\d{2}:\d{2}:\d{2})\s+(TRACE|DEBUG|INFO|WARN|ERROR)\s+(\S+?)]\s+(.*)$/i;
+  /^(?:(\d{2}:\d{2}:\d{2})\s+\[(TRACE|DEBUG|INFO|WARN|ERROR)]\s+(\S+?):\s+(.*)|\[(\d{4}-\d{2}-\d{2}T?\d{2}:\d{2}:\d{2})\s+(TRACE|DEBUG|INFO|WARN|ERROR)\s+(\S+?)]\s+(.*))$/i;
 
 type Level = "error" | "warning" | "info" | "debug";
 
@@ -106,7 +108,16 @@ export function LogLine({ line, index, format = "harvest" }: LogLineProps) {
     );
   }
 
-  const [, timestamp, levelRaw, module, message] = match;
+  let timestamp: string, levelRaw: string, module: string, message: string;
+  if (format === "app") {
+    // APP_RE has two alternatives: groups 1-4 or 5-8
+    timestamp = match[1] ?? match[5] ?? "";
+    levelRaw = match[2] ?? match[6] ?? "INFO";
+    module = match[3] ?? match[7] ?? "";
+    message = match[4] ?? match[8] ?? "";
+  } else {
+    [, timestamp, levelRaw, module, message] = match;
+  }
   const level = parseLevel(levelRaw);
   const levelColor = LEVEL_COLORS[level];
   const border = LEVEL_BORDERS[level];

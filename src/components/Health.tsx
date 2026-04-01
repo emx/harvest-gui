@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { RefreshCw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +49,7 @@ function HealthIndicators() {
   const { data: canopyOk, isLoading: canopyLoading } = useCanopyDirCheck();
 
   const [apiOk, setApiOk] = useState<boolean | null>(null);
-  const [apiLoading, setApiLoading] = useState(true);
+  const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState("");
 
   async function checkApi() {
@@ -68,10 +68,6 @@ function HealthIndicators() {
       setApiLoading(false);
     }
   }
-
-  useEffect(() => {
-    checkApi();
-  }, []);
 
   return (
     <div className="grid grid-cols-3 gap-4">
@@ -92,7 +88,7 @@ function HealthIndicators() {
           label="Canopy API"
           ok={apiOk ?? false}
           loading={apiLoading}
-          statusText={apiOk ? "OK" : apiError || "Failed"}
+          statusText={apiOk ? "OK" : apiOk === null ? "Not checked" : apiError || "Failed"}
         />
         <Button
           variant="ghost"

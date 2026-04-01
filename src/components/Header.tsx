@@ -27,6 +27,7 @@ export function Header() {
       if (running) {
         await invoke("stop_harvest");
       } else {
+        useAppStore.getState().clearHarvestLogs();
         await invoke("start_harvest", {
           flags: serializeFlags(harvestFlags),
         });

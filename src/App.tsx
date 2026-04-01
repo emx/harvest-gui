@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { listen } from "@tauri-apps/api/event";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { StatusBar } from "@/components/StatusBar";
@@ -9,7 +10,7 @@ import { History } from "@/components/History";
 import { Active } from "@/components/Active";
 import { Health } from "@/components/Health";
 import { Settings } from "@/components/Settings";
-import { useAppStore, type View } from "@/store";
+import { useAppStore, type View, type LogEntry } from "@/store";
 import { useResolvedConfig } from "@/queries";
 import "./App.css";
 
@@ -34,9 +35,20 @@ const views: Record<View, React.ComponentType> = {
 function App() {
   const activeView = useAppStore((s) => s.activeView);
   const setActiveView = useAppStore((s) => s.setActiveView);
+  const addHarvestLog = useAppStore((s) => s.addHarvestLog);
   const ViewComponent = views[activeView];
 
   const { data: resolved } = useResolvedConfig();
+
+  // App-level harvest log listener — captures logs regardless of which view is mounted
+  useEffect(() => {
+    const unlisten = listen<LogEntry>("harvest-log", (event) => {
+      addHarvestLog(event.payload);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [addHarvestLog]);
 
   // First-launch: if no config values are set, redirect to Settings
   useEffect(() => {

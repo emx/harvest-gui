@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { CheckCircle2, HardDrive, Database } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProcessed, useLastPoll, useCollectFiles, useResolvedConfig, useDiskUsage } from "@/queries";
+import { useProcessed, useLastPoll, useCollectFiles, useResolvedConfig } from "@/queries";
 import { formatRelativeTime, formatBytes } from "@/lib/format";
 import { useAppStore } from "@/store";
 
@@ -86,7 +86,6 @@ function PollStatus() {
 function MetricCards() {
   const processed = useProcessed();
   const collects = useCollectFiles();
-  const disk = useDiskUsage();
 
   const processedCount = processed.data
     ? Object.keys(processed.data).length
@@ -98,20 +97,6 @@ function MetricCards() {
         0
       )
     : null;
-
-  // Disk usage coloring — guard against total_bytes=0
-  const diskPct =
-    disk.data && disk.data.total_bytes > 0
-      ? (disk.data.used_bytes / disk.data.total_bytes) * 100
-      : null;
-  const diskColor =
-    diskPct === null
-      ? "text-slate-400"
-      : diskPct > 90
-        ? "text-red-400"
-        : diskPct > 70
-          ? "text-amber-400"
-          : "text-teal-400";
 
   const metrics = [
     {
@@ -133,19 +118,15 @@ function MetricCards() {
       icon: HardDrive,
     },
     {
-      label: "Disk Usage",
+      label: "Data Size",
       value: harvestSize !== null ? formatBytes(harvestSize) : null,
       displayValue: harvestSize !== null ? formatBytes(harvestSize) : null,
       numericValue: null,
-      loading: collects.isLoading || disk.isLoading,
-      error: collects.error || disk.error,
+      loading: collects.isLoading,
+      error: collects.error,
       icon: Database,
-      extra: diskPct !== null
-        ? `${diskPct.toFixed(0)}% volume used`
-        : disk.data
-          ? "Unknown"
-          : null,
-      extraColor: diskColor,
+      extra: diskCount !== null ? `across ${diskCount} collects` : null,
+      extraColor: "text-slate-400",
     },
   ];
 

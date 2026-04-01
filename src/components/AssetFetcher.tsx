@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { List } from "lucide-react";
+import { List, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -45,7 +45,11 @@ export function AssetFetcher({
           disabled={loading}
           className="border-white/[0.08] hover:bg-white/[0.03]"
         >
-          <List className="size-3.5" data-icon="inline-start" />
+          {loading ? (
+            <Loader2 className="size-3.5 animate-spin" data-icon="inline-start" />
+          ) : (
+            <List className="size-3.5" data-icon="inline-start" />
+          )}
           {loading ? "Loading..." : "Fetch Assets List"}
         </Button>
       </CardHeader>

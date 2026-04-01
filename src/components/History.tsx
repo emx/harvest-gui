@@ -22,45 +22,51 @@ function DetailPanel({
   collects,
   onClose,
 }: {
-  collectId: string;
+  collectId: string | null;
   collects: CollectEntry[] | undefined;
   onClose: () => void;
 }) {
-  const entry = collects?.find((c) => c.collect_id === collectId);
+  const entry = collectId ? collects?.find((c) => c.collect_id === collectId) : null;
 
   return (
-    <div className="w-80 shrink-0 border-l border-white/[0.05] overflow-y-auto"
-      style={{ background: "var(--card-panel)", backdropFilter: "blur(8px)" }}
-    >
-      <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
-        <h3 className="text-sm font-medium font-mono text-teal-400 truncate max-w-[220px]">
-          {collectId}
-        </h3>
-        <Button variant="ghost" size="icon-xs" onClick={onClose}>
-          <X className="size-4" />
-        </Button>
-      </div>
-      <div className="p-4">
-        {!entry || entry.files.length === 0 ? (
-          <p className="text-sm text-slate-500">No files downloaded</p>
-        ) : (
-          <div className="space-y-1.5">
-            {entry.files.map((f) => (
-              <div
-                key={f.name}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="font-mono truncate max-w-[160px] text-slate-300 text-xs">
-                  {f.name}
-                </span>
-                <span className="font-mono text-slate-500 text-xs">
-                  {formatBytes(f.size)}
-                </span>
-              </div>
-            ))}
+    <div className="w-[40%] shrink-0 border-l border-white/[0.05] overflow-y-auto bg-black/30 rounded-r-md">
+      {!collectId ? (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-sm text-slate-500">Select a collect to view files</p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
+            <h3 className="text-sm font-medium font-mono text-teal-400 truncate max-w-[220px]">
+              {collectId}
+            </h3>
+            <Button variant="ghost" size="icon-xs" onClick={onClose}>
+              <X className="size-4" />
+            </Button>
           </div>
-        )}
-      </div>
+          <div className="p-4">
+            {!entry || entry.files.length === 0 ? (
+              <p className="text-sm text-slate-500">No files downloaded</p>
+            ) : (
+              <div className="space-y-1.5">
+                {entry.files.map((f) => (
+                  <div
+                    key={f.name}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="font-mono truncate max-w-[160px] text-slate-300 text-xs">
+                      {f.name}
+                    </span>
+                    <span className="font-mono text-slate-500 text-xs">
+                      {formatBytes(f.size)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -140,7 +146,7 @@ export function History() {
       </div>
 
       <div className="flex flex-1 overflow-hidden px-6 pb-6 gap-0">
-        <div className={`flex-1 overflow-y-auto rounded-md border border-white/[0.08] glass-card ${selectedCollectId ? "rounded-r-none border-r-0" : ""}`}>
+        <div className="w-[60%] overflow-y-auto rounded-l-md border border-r-0 border-white/[0.08] glass-card">
           <Table>
             <TableHeader>
               <TableRow className="border-white/[0.05] hover:bg-transparent">
@@ -206,13 +212,11 @@ export function History() {
           </Table>
         </div>
 
-        {selectedCollectId && (
-          <DetailPanel
-            collectId={selectedCollectId}
-            collects={collects.data}
-            onClose={() => setSelectedCollectId(null)}
-          />
-        )}
+        <DetailPanel
+          collectId={selectedCollectId}
+          collects={collects.data}
+          onClose={() => setSelectedCollectId(null)}
+        />
       </div>
     </div>
   );
