@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { RefreshCw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +68,14 @@ function HealthIndicators() {
       setApiLoading(false);
     }
   }
+
+  // Non-blocking: auto-check API after a short delay so the page renders instantly
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkApi();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="grid grid-cols-3 gap-4">

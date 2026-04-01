@@ -29,7 +29,7 @@ function DetailPanel({
   const entry = collectId ? collects?.find((c) => c.collect_id === collectId) : null;
 
   return (
-    <div className="w-[40%] shrink-0 border-l border-white/[0.05] overflow-y-auto bg-black/30 rounded-r-md">
+    <div className="w-[50%] shrink-0 border-l border-white/[0.05] overflow-y-auto bg-black/30 rounded-r-md">
       {!collectId ? (
         <div className="flex items-center justify-center h-full">
           <p className="text-sm text-slate-500">Select a collect to view files</p>
@@ -37,7 +37,7 @@ function DetailPanel({
       ) : (
         <>
           <div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
-            <h3 className="text-sm font-medium font-mono text-teal-400 truncate max-w-[220px]">
+            <h3 className="text-xs font-medium font-mono text-teal-400 break-all">
               {collectId}
             </h3>
             <Button variant="ghost" size="icon-xs" onClick={onClose}>
@@ -54,7 +54,7 @@ function DetailPanel({
                     key={f.name}
                     className="flex items-center justify-between text-sm"
                   >
-                    <span className="font-mono truncate max-w-[160px] text-slate-300 text-xs">
+                    <span className="font-mono break-all text-slate-300 text-xs">
                       {f.name}
                     </span>
                     <span className="font-mono text-slate-500 text-xs">
@@ -146,7 +146,7 @@ export function History() {
       </div>
 
       <div className="flex flex-1 overflow-hidden px-6 pb-6 gap-0">
-        <div className="w-[60%] overflow-y-auto rounded-l-md border border-r-0 border-white/[0.08] glass-card">
+        <div className="w-[50%] overflow-y-auto rounded-l-md border border-r-0 border-white/[0.08] glass-card">
           <Table>
             <TableHeader>
               <TableRow className="border-white/[0.05] hover:bg-transparent">
@@ -199,7 +199,7 @@ export function History() {
                       )
                     }
                   >
-                    <TableCell className="font-mono text-sm text-slate-300">
+                    <TableCell className="font-mono text-xs text-slate-300 break-all">
                       {e.id}
                     </TableCell>
                     <TableCell className="text-sm font-mono text-slate-400">
