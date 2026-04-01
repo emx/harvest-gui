@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { RefreshCw, Search } from "lucide-react";
+import { useState } from "react";
+import { Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHarvestStatus, useTailAppLog, useCanopyDirCheck, useAria2Check } from "@/queries";
+import { useAppStore } from "@/store";
 import { AssetFetcher } from "@/components/AssetFetcher";
 import { LogLine } from "@/components/LogLine";
 
@@ -15,27 +14,28 @@ function HealthIndicator({
   statusText,
 }: {
   label: string;
-  ok: boolean;
+  ok: boolean | null;
   loading?: boolean;
   statusText: string;
 }) {
+  const dotColor =
+    ok === true ? "bg-teal-500" : ok === false ? "bg-red-400" : "bg-slate-500";
+  const textColor =
+    ok === true ? "text-teal-400" : ok === false ? "text-red-400" : "text-slate-400";
+
   return (
     <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardContent className="flex items-center gap-3 pt-5 pb-4">
         {loading ? (
           <Skeleton className="size-3 rounded-full" />
         ) : (
-          <span
-            className={`inline-block size-3 rounded-full ${
-              ok ? "bg-teal-500" : "bg-red-400"
-            }`}
-          />
+          <span className={`inline-block size-3 rounded-full ${dotColor}`} />
         )}
         <div>
           <p className="text-xs font-semibold tracking-wider uppercase text-slate-400">
             {label}
           </p>
-          <p className={`text-sm ${ok ? "text-teal-400" : "text-red-400"}`}>
+          <p className={`text-sm ${textColor}`}>
             {loading ? "Checking..." : statusText}
           </p>
         </div>
@@ -44,39 +44,53 @@ function HealthIndicator({
   );
 }
 
+const ERROR_PATTERNS = [
+  /ERROR\s+harvest\.poller/i,
+  /ERROR\s+harvest\.canopyauth/i,
+  /HTTP\s+4\d\d/i,
+  /rate_limit/i,
+];
+
+const SUCCESS_PATTERNS = [
+  /Token acquired/i,
+  /Found.*item/i,
+  /Poll cycle/i,
+];
+
+function inferApiStatus(
+  running: boolean,
+  logs: { line: string }[]
+): { ok: boolean | null; text: string } {
+  if (!running) return { ok: null, text: "Not running" };
+
+  const recent = logs.slice(-50);
+
+  // Scan from most recent backwards
+  for (let i = recent.length - 1; i >= 0; i--) {
+    const line = recent[i].line;
+    for (const pat of ERROR_PATTERNS) {
+      if (pat.test(line)) {
+        // Extract a short error snippet
+        const snippet = line.length > 60 ? line.slice(0, 60) + "…" : line;
+        return { ok: false, text: snippet };
+      }
+    }
+    for (const pat of SUCCESS_PATTERNS) {
+      if (pat.test(line)) return { ok: true, text: "OK" };
+    }
+  }
+
+  return { ok: null, text: "Waiting for poll..." };
+}
+
 function HealthIndicators() {
   const { data: harvestStatus, isLoading: harvestLoading } = useHarvestStatus();
   const { data: canopyOk, isLoading: canopyLoading } = useCanopyDirCheck();
   const { data: aria2Ok, isLoading: aria2Loading } = useAria2Check();
+  const harvestLogs = useAppStore((s) => s.harvestLogs);
 
-  const [apiOk, setApiOk] = useState<boolean | null>(null);
-  const [apiLoading, setApiLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
-
-  async function checkApi() {
-    setApiLoading(true);
-    try {
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), 10_000)
-      );
-      await Promise.race([invoke<string[]>("list_assets"), timeout]);
-      setApiOk(true);
-      setApiError("");
-    } catch (e) {
-      setApiOk(false);
-      setApiError(`${e}`);
-    } finally {
-      setApiLoading(false);
-    }
-  }
-
-  // Non-blocking: auto-check API after a short delay so the page renders instantly
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      checkApi();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const running = harvestStatus?.running ?? false;
+  const apiStatus = inferApiStatus(running, harvestLogs);
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -92,25 +106,11 @@ function HealthIndicators() {
         loading={canopyLoading}
         statusText={canopyOk ? "Directory accessible" : "Not accessible"}
       />
-      <div className="relative">
-        <HealthIndicator
-          label="Canopy API"
-          ok={apiOk ?? false}
-          loading={apiLoading}
-          statusText={apiOk ? "OK" : apiOk === null ? "Not checked" : apiError || "Failed"}
-        />
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={checkApi}
-          disabled={apiLoading}
-          className="absolute top-3 right-3"
-        >
-          <RefreshCw
-            className={`size-3.5 text-slate-500 ${apiLoading ? "animate-spin" : ""}`}
-          />
-        </Button>
-      </div>
+      <HealthIndicator
+        label="Canopy API"
+        ok={apiStatus.ok}
+        statusText={apiStatus.text}
+      />
       <HealthIndicator
         label="Aria2 RPC"
         ok={aria2Ok ?? false}
