@@ -4,8 +4,9 @@ import { RefreshCw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useHarvestStatus, useTailLog, useCanopyDirCheck } from "@/queries";
+import { useHarvestStatus, useTailAppLog, useCanopyDirCheck } from "@/queries";
 import { AssetFetcher } from "@/components/AssetFetcher";
+import { LogLine } from "@/components/LogLine";
 
 function HealthIndicator({
   label,
@@ -109,17 +110,8 @@ function HealthIndicators() {
   );
 }
 
-function getLogLineColor(line: string): string {
-  const upper = line.toUpperCase();
-  if (upper.includes("ERROR") || upper.includes("CRITICAL"))
-    return "text-red-400";
-  if (upper.includes("WARNING")) return "text-amber-500";
-  if (upper.includes("DEBUG")) return "text-slate-500";
-  return "text-slate-300";
-}
-
-function LogViewer() {
-  const { data: lines, isLoading, error } = useTailLog(100);
+function AppDiagnostics() {
+  const { data: lines, isLoading, error } = useTailAppLog(100);
   const [filter, setFilter] = useState("");
 
   const filtered = lines?.filter((l) =>
@@ -130,7 +122,7 @@ function LogViewer() {
     <Card className="glass-card border-t-2 border-t-teal-500/40">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
-          Log Viewer
+          App Diagnostics
         </CardTitle>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-slate-500" />
@@ -156,9 +148,7 @@ function LogViewer() {
               </span>
             ) : (
               filtered.map((line, i) => (
-                <div key={i} className={getLogLineColor(line)}>
-                  {line}
-                </div>
+                <LogLine key={i} line={line} index={i} format="app" />
               ))
             )}
           </div>
@@ -173,7 +163,7 @@ export function Health() {
     <div className="space-y-6 p-6">
       <h2 className="text-lg font-semibold text-slate-100">Health</h2>
       <HealthIndicators />
-      <LogViewer />
+      <AppDiagnostics />
       <AssetFetcher />
     </div>
   );

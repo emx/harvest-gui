@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useHarvestStatus } from "@/queries";
 import { useAppStore, serializeFlags } from "@/store";
 import { AssetFetcher } from "@/components/AssetFetcher";
+import { LogLine } from "@/components/LogLine";
 
 const MAX_LOG_LINES = 1000;
 
@@ -185,16 +186,12 @@ export function Active() {
               </span>
             ) : (
               logs.map((entry, i) => (
-                <div
+                <LogLine
                   key={i}
-                  className={
-                    entry.stream === "stderr"
-                      ? "text-red-400"
-                      : "text-slate-300"
-                  }
-                >
-                  {entry.line}
-                </div>
+                  line={entry.line}
+                  index={i}
+                  format="harvest"
+                />
               ))
             )}
           </div>

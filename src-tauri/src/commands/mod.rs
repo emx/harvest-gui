@@ -1,6 +1,7 @@
 pub mod config;
 pub mod process;
 
+use log::{error, info, warn};
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ pub fn bundled_python(app: &AppHandle) -> Option<PathBuf> {
         resource_dir.join("resources/harvest-venv/bin/python")
     };
     if python.exists() {
+        info!("bundled Python found at {}", python.display());
         Some(python)
     } else {
         // Dev mode: check src-tauri/resources directly
@@ -30,8 +32,10 @@ pub fn bundled_python(app: &AppHandle) -> Option<PathBuf> {
             PathBuf::from("resources/harvest-venv/bin/python")
         };
         if dev_python.exists() {
+            info!("dev-mode Python found at {}", dev_python.display());
             Some(dev_python)
         } else {
+            info!("no bundled Python found, will use uv fallback");
             None
         }
     }
@@ -46,6 +50,7 @@ pub fn bundled_aria2c(app: &AppHandle) -> Option<PathBuf> {
         resource_dir.join("resources/bin/aria2c")
     };
     if aria2c.exists() {
+        info!("bundled aria2c found at {}", aria2c.display());
         Some(aria2c)
     } else {
         let dev_aria2c = if cfg!(windows) {
@@ -54,8 +59,10 @@ pub fn bundled_aria2c(app: &AppHandle) -> Option<PathBuf> {
             PathBuf::from("resources/bin/aria2c")
         };
         if dev_aria2c.exists() {
+            info!("dev-mode aria2c found at {}", dev_aria2c.display());
             Some(dev_aria2c)
         } else {
+            info!("no bundled aria2c found");
             None
         }
     }
@@ -65,19 +72,32 @@ fn canopy_dir(app: &AppHandle) -> Result<PathBuf, String> {
     // Read from saved config first, fall back to env var
     if let Ok(cfg) = config::load_config(app.clone()) {
         if !cfg.canopy_local_dir.is_empty() {
+            info!("canopy_dir resolved from config: {}", cfg.canopy_local_dir);
             return Ok(PathBuf::from(cfg.canopy_local_dir));
         }
     }
-    env::var("CANOPY_LOCAL_DIR")
-        .map(PathBuf::from)
-        .map_err(|_| "CANOPY_LOCAL_DIR is not configured. Set it in Settings.".to_string())
+    match env::var("CANOPY_LOCAL_DIR") {
+        Ok(val) => {
+            info!("canopy_dir resolved from env: {}", val);
+            Ok(PathBuf::from(val))
+        }
+        Err(_) => {
+            error!("CANOPY_LOCAL_DIR is not configured");
+            Err("CANOPY_LOCAL_DIR is not configured. Set it in Settings.".to_string())
+        }
+    }
 }
 
 #[tauri::command]
 pub fn get_processed(app: AppHandle) -> Result<HashMap<String, String>, String> {
     let path = canopy_dir(&app)?.join(".harvest/processed_collects.json");
-    let data = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+    let data = match fs::read_to_string(&path) {
+        Ok(d) => d,
+        Err(e) => {
+            warn!("processed_collects.json not found: {}", e);
+            return Err(format!("Failed to read {}: {}", path.display(), e));
+        }
+    };
     serde_json::from_str(&data)
         .map_err(|e| format!("Failed to parse {}: {}", path.display(), e))
 }
@@ -85,8 +105,13 @@ pub fn get_processed(app: AppHandle) -> Result<HashMap<String, String>, String> 
 #[tauri::command]
 pub fn get_last_poll(app: AppHandle) -> Result<Value, String> {
     let path = canopy_dir(&app)?.join(".harvest/last_poll.json");
-    let data = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+    let data = match fs::read_to_string(&path) {
+        Ok(d) => d,
+        Err(e) => {
+            warn!("last_poll.json not found: {}", e);
+            return Err(format!("Failed to read {}: {}", path.display(), e));
+        }
+    };
     serde_json::from_str(&data)
         .map_err(|e| format!("Failed to parse {}: {}", path.display(), e))
 }
@@ -182,6 +207,7 @@ pub fn tail_log(app: AppHandle, lines: Option<usize>) -> Result<Vec<String>, Str
 
 #[tauri::command]
 pub fn list_assets(app: AppHandle) -> Result<Vec<String>, String> {
+    info!("list_assets called");
     let mut cmd = if let Some(python) = bundled_python(&app) {
         let python_home = app
             .path()
@@ -216,11 +242,14 @@ pub fn list_assets(app: AppHandle) -> Result<Vec<String>, String> {
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
+        error!("list_assets failed: {}", stderr.trim());
         return Err(format!("harvest --assets failed: {}", stderr.trim()));
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(stdout.lines().map(|s| s.to_string()).collect())
+    let assets: Vec<String> = stdout.lines().map(|s| s.to_string()).collect();
+    info!("list_assets returned {} assets", assets.len());
+    Ok(assets)
 }
 
 #[derive(Serialize)]
@@ -288,8 +317,44 @@ pub fn get_disk_usage(app: AppHandle) -> Result<DiskUsage, String> {
 #[tauri::command]
 pub fn check_canopy_dir(app: AppHandle) -> Result<bool, String> {
     let dir = canopy_dir(&app)?;
-    match fs::metadata(&dir) {
-        Ok(m) => Ok(m.is_dir()),
-        Err(_) => Ok(false),
+    let ok = match fs::metadata(&dir) {
+        Ok(m) => m.is_dir(),
+        Err(_) => false,
+    };
+    info!("check_canopy_dir: {} -> {}", dir.display(), ok);
+    Ok(ok)
+}
+
+#[tauri::command]
+pub fn tail_app_log(app: AppHandle, lines: Option<usize>) -> Result<Vec<String>, String> {
+    let n = lines.unwrap_or(100);
+    let log_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    let path = log_dir.join("harvest-gui.log");
+    let mut file = fs::File::open(&path)
+        .map_err(|e| format!("Failed to open {}: {}", path.display(), e))?;
+
+    let file_len = file
+        .metadata()
+        .map_err(|e| format!("Failed to read metadata: {}", e))?
+        .len();
+
+    if file_len == 0 {
+        return Ok(Vec::new());
     }
+
+    // Read last chunk (same logic as tail_log)
+    let chunk_size: u64 = 64 * 1024;
+    let start = file_len.saturating_sub(chunk_size);
+    file.seek(SeekFrom::Start(start))
+        .map_err(|e| format!("Failed to seek: {}", e))?;
+    let mut buf = String::new();
+    file.read_to_string(&mut buf)
+        .map_err(|e| format!("Failed to read log: {}", e))?;
+
+    let all_lines: Vec<&str> = buf.lines().collect();
+    let skip = all_lines.len().saturating_sub(n);
+    Ok(all_lines[skip..].iter().map(|s| s.to_string()).collect())
 }

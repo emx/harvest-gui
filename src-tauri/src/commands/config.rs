@@ -1,3 +1,4 @@
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
@@ -58,7 +59,11 @@ pub fn load_config(app: AppHandle) -> Result<AppConfig, String> {
     }
     let data =
         fs::read_to_string(&path).map_err(|e| format!("Failed to read config: {}", e))?;
-    serde_json::from_str(&data).map_err(|e| format!("Failed to parse config: {}", e))
+    info!("config loaded from {}", path.display());
+    serde_json::from_str(&data).map_err(|e| {
+        error!("failed to parse config: {}", e);
+        format!("Failed to parse config: {}", e)
+    })
 }
 
 #[tauri::command]
@@ -70,7 +75,9 @@ pub fn save_config(app: AppHandle, config: AppConfig) -> Result<(), String> {
     }
     let json = serde_json::to_string_pretty(&config)
         .map_err(|e| format!("Failed to serialize: {}", e))?;
-    fs::write(&path, json).map_err(|e| format!("Failed to write config: {}", e))
+    fs::write(&path, &json).map_err(|e| format!("Failed to write config: {}", e))?;
+    info!("config saved to {}", path.display());
+    Ok(())
 }
 
 #[derive(Serialize)]

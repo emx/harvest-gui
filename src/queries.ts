@@ -66,6 +66,15 @@ export function useTailLog(lines: number = 100) {
   });
 }
 
+export function useTailAppLog(lines: number = 100) {
+  return useQuery({
+    queryKey: ["tailAppLog", lines],
+    queryFn: () => invoke<string[]>("tail_app_log", { lines }),
+    staleTime: 10_000,
+    refetchInterval: 10_000,
+  });
+}
+
 export interface DiskUsage {
   total_bytes: number;
   available_bytes: number;
