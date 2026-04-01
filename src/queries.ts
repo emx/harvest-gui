@@ -102,6 +102,14 @@ export function useCanopyDirCheck() {
   });
 }
 
+export function useAria2Check() {
+  return useQuery({
+    queryKey: ["aria2Check"],
+    queryFn: () => invoke<boolean>("check_aria2_rpc"),
+    staleTime: 30_000,
+  });
+}
+
 export function useResolvedConfig() {
   return useQuery({
     queryKey: ["resolvedConfig"],

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Satellite, Play, Square } from "lucide-react";
+import { Satellite, Play } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,16 +22,12 @@ export function Header() {
     return () => clearTimeout(timer);
   }, [error]);
 
-  async function handleToggle() {
+  async function handleStart() {
     try {
-      if (running) {
-        await invoke("stop_harvest");
-      } else {
-        useAppStore.getState().clearHarvestLogs();
-        await invoke("start_harvest", {
-          flags: serializeFlags(harvestFlags),
-        });
-      }
+      useAppStore.getState().clearHarvestLogs();
+      await invoke("start_harvest", {
+        flags: serializeFlags(harvestFlags),
+      });
       refetch();
     } catch (e) {
       setError(`${e}`);
@@ -62,28 +58,20 @@ export function Header() {
             {mode}
           </Badge>
         )}
-        <Button
-          variant={running ? "destructive" : "default"}
-          size="sm"
-          onClick={handleToggle}
-          className={
-            running
-              ? "bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30"
-              : "bg-teal-600 text-white hover:bg-teal-500 border-teal-500/30"
-          }
-        >
-          {running ? (
-            <>
-              <Square className="size-3.5" data-icon="inline-start" />
-              Stop Poll
-            </>
-          ) : (
-            <>
-              <Play className="size-3.5" data-icon="inline-start" />
-              Start Poll
-            </>
-          )}
-        </Button>
+        {running ? (
+          <Badge className="bg-teal-500 text-white border-teal-400/50 cursor-default">
+            Harvest Poll Running
+          </Badge>
+        ) : (
+          <Button
+            size="sm"
+            onClick={handleStart}
+            className="bg-teal-600 text-white hover:bg-teal-500 border-teal-500/30"
+          >
+            <Play className="size-3.5" data-icon="inline-start" />
+            Start Poll
+          </Button>
+        )}
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-teal-500/50 to-transparent" />
     </header>

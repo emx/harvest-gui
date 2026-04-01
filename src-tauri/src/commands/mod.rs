@@ -72,15 +72,11 @@ fn canopy_dir(app: &AppHandle) -> Result<PathBuf, String> {
     // Read from saved config first, fall back to env var
     if let Ok(cfg) = config::load_config(app.clone()) {
         if !cfg.canopy_local_dir.is_empty() {
-            info!("canopy_dir resolved from config: {}", cfg.canopy_local_dir);
             return Ok(PathBuf::from(cfg.canopy_local_dir));
         }
     }
     match env::var("CANOPY_LOCAL_DIR") {
-        Ok(val) => {
-            info!("canopy_dir resolved from env: {}", val);
-            Ok(PathBuf::from(val))
-        }
+        Ok(val) => Ok(PathBuf::from(val)),
         Err(_) => {
             error!("CANOPY_LOCAL_DIR is not configured");
             Err("CANOPY_LOCAL_DIR is not configured. Set it in Settings.".to_string())
@@ -357,4 +353,56 @@ pub fn tail_app_log(app: AppHandle, lines: Option<usize>) -> Result<Vec<String>,
     let all_lines: Vec<&str> = buf.lines().collect();
     let skip = all_lines.len().saturating_sub(n);
     Ok(all_lines[skip..].iter().map(|s| s.to_string()).collect())
+}
+
+#[tauri::command]
+pub fn set_cutover_date(app: AppHandle, date: String) -> Result<(), String> {
+    let dir = canopy_dir(&app)?;
+    let harvest_dir = dir.join(".harvest");
+    fs::create_dir_all(&harvest_dir)
+        .map_err(|e| format!("Failed to create .harvest dir: {}", e))?;
+    let path = harvest_dir.join("last_poll.json");
+    let content = format!("{{\"last_poll_ts\": \"{}T00:00:00Z\"}}", date);
+    fs::write(&path, &content)
+        .map_err(|e| format!("Failed to write last_poll.json: {}", e))?;
+    info!("cutover date set to {} at {}", date, path.display());
+    Ok(())
+}
+
+#[tauri::command]
+pub fn check_aria2_rpc() -> Result<bool, String> {
+    use std::io::{Write as IoWrite, Read as IoRead};
+    use std::net::TcpStream;
+    use std::time::Duration;
+
+    let body = r#"{"jsonrpc":"2.0","id":"1","method":"aria2.getVersion"}"#;
+    let request = format!(
+        "POST /jsonrpc HTTP/1.1\r\nHost: localhost:6800\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        body.len(),
+        body
+    );
+
+    let stream = TcpStream::connect_timeout(
+        &"127.0.0.1:6800".parse().unwrap(),
+        Duration::from_secs(2),
+    );
+
+    match stream {
+        Ok(mut s) => {
+            s.set_read_timeout(Some(Duration::from_secs(2))).ok();
+            s.set_write_timeout(Some(Duration::from_secs(2))).ok();
+            if s.write_all(request.as_bytes()).is_err() {
+                return Ok(false);
+            }
+            let mut response = vec![0u8; 1024];
+            match s.read(&mut response) {
+                Ok(n) if n > 0 => {
+                    let resp = String::from_utf8_lossy(&response[..n]);
+                    Ok(resp.contains("200") || resp.contains("\"result\""))
+                }
+                _ => Ok(false),
+            }
+        }
+        Err(_) => Ok(false),
+    }
 }

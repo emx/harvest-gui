@@ -48,6 +48,8 @@ pub fn run() {
             commands::list_assets,
             commands::get_disk_usage,
             commands::check_canopy_dir,
+            commands::set_cutover_date,
+            commands::check_aria2_rpc,
             commands::config::load_config,
             commands::config::save_config,
             commands::config::get_resolved_config,
