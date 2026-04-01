@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useHarvestStatus } from "@/queries";
 import { useAppStore, serializeFlags } from "@/store";
 import { AssetFetcher } from "@/components/AssetFetcher";
+import { DownloadProgress } from "@/components/DownloadProgress";
 import { LogLine } from "@/components/LogLine";
 
 export function Active() {
@@ -119,6 +120,8 @@ export function Active() {
         emptyText="Fetch list of available assets before starting a download"
         maxHeight="max-h-36"
       />
+
+      <DownloadProgress enabled={running} />
 
       <Card className="glass-card border-t-2 border-t-teal-500/40">
         <CardHeader>
