@@ -50,6 +50,7 @@ pub fn run() {
             commands::check_canopy_dir,
             commands::set_cutover_date,
             commands::check_aria2_rpc,
+            commands::get_download_progress,
             commands::config::load_config,
             commands::config::save_config,
             commands::config::get_resolved_config,

@@ -102,6 +102,26 @@ export function useCanopyDirCheck() {
   });
 }
 
+export interface DownloadEntry {
+  gid: string;
+  filename: string;
+  status: string;
+  total_bytes: number;
+  completed_bytes: number;
+  speed_bytes: number;
+  connections: number;
+}
+
+export function useDownloadProgress(enabled: boolean) {
+  return useQuery({
+    queryKey: ["downloadProgress"],
+    queryFn: () => invoke<DownloadEntry[]>("get_download_progress"),
+    refetchInterval: 2_000,
+    staleTime: 1_000,
+    enabled,
+  });
+}
+
 export function useAria2Check() {
   return useQuery({
     queryKey: ["aria2Check"],

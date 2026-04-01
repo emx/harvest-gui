@@ -406,3 +406,136 @@ pub fn check_aria2_rpc() -> Result<bool, String> {
         Err(_) => Ok(false),
     }
 }
+
+#[derive(Serialize)]
+pub struct DownloadEntry {
+    pub gid: String,
+    pub filename: String,
+    pub status: String,
+    pub total_bytes: u64,
+    pub completed_bytes: u64,
+    pub speed_bytes: u64,
+    pub connections: u32,
+}
+
+/// Make an aria2 JSON-RPC call and return the parsed JSON response body.
+/// Returns None if aria2 is not reachable.
+fn aria2_rpc_call(body: &str) -> Option<Value> {
+    use std::io::{Write as IoWrite, Read as IoRead};
+    use std::net::TcpStream;
+    use std::time::Duration;
+
+    let request = format!(
+        "POST /jsonrpc HTTP/1.1\r\nHost: localhost:6800\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        body.len(),
+        body
+    );
+
+    let mut s = TcpStream::connect_timeout(
+        &"127.0.0.1:6800".parse().unwrap(),
+        Duration::from_secs(2),
+    )
+    .ok()?;
+    s.set_read_timeout(Some(Duration::from_secs(3))).ok();
+    s.set_write_timeout(Some(Duration::from_secs(2))).ok();
+    s.write_all(request.as_bytes()).ok()?;
+
+    // Read full response (loop until connection closes)
+    let mut buf = Vec::with_capacity(64 * 1024);
+    let mut chunk = [0u8; 8192];
+    loop {
+        match s.read(&mut chunk) {
+            Ok(0) => break,
+            Ok(n) => buf.extend_from_slice(&chunk[..n]),
+            Err(_) => break,
+        }
+    }
+
+    let resp = String::from_utf8_lossy(&buf);
+    // Find JSON body after HTTP headers (double CRLF)
+    let json_start = resp.find("\r\n\r\n").map(|i| i + 4)?;
+    serde_json::from_str(&resp[json_start..]).ok()
+}
+
+fn parse_download_entries(value: &Value) -> Vec<DownloadEntry> {
+    let arr = match value.get("result").and_then(|r| r.as_array()) {
+        Some(a) => a,
+        None => return Vec::new(),
+    };
+
+    arr.iter()
+        .filter_map(|item| {
+            let gid = item.get("gid")?.as_str()?.to_string();
+            let status = item.get("status")?.as_str()?.to_string();
+            let total_bytes: u64 = item
+                .get("totalLength")
+                .and_then(|v| v.as_str())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0);
+            let completed_bytes: u64 = item
+                .get("completedLength")
+                .and_then(|v| v.as_str())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0);
+            let speed_bytes: u64 = item
+                .get("downloadSpeed")
+                .and_then(|v| v.as_str())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0);
+            let connections: u32 = item
+                .get("connections")
+                .and_then(|v| v.as_str())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0);
+
+            // Get filename from files[0].path
+            let filename = item
+                .get("files")
+                .and_then(|f| f.as_array())
+                .and_then(|f| f.first())
+                .and_then(|f| f.get("path"))
+                .and_then(|p| p.as_str())
+                .map(|p| {
+                    p.rsplit('/')
+                        .next()
+                        .unwrap_or(p)
+                        .rsplit('\\')
+                        .next()
+                        .unwrap_or(p)
+                        .to_string()
+                })
+                .unwrap_or_else(|| gid.clone());
+
+            Some(DownloadEntry {
+                gid,
+                filename,
+                status,
+                total_bytes,
+                completed_bytes,
+                speed_bytes,
+                connections,
+            })
+        })
+        .collect()
+}
+
+#[tauri::command]
+pub fn get_download_progress() -> Result<Vec<DownloadEntry>, String> {
+    let mut entries = Vec::new();
+
+    // Get active downloads
+    let active_body =
+        r#"{"jsonrpc":"2.0","id":"active","method":"aria2.tellActive","params":["token:harvest123"]}"#;
+    if let Some(resp) = aria2_rpc_call(active_body) {
+        entries.extend(parse_download_entries(&resp));
+    }
+
+    // Get waiting downloads
+    let waiting_body =
+        r#"{"jsonrpc":"2.0","id":"waiting","method":"aria2.tellWaiting","params":["token:harvest123",0,10]}"#;
+    if let Some(resp) = aria2_rpc_call(waiting_body) {
+        entries.extend(parse_download_entries(&resp));
+    }
+
+    Ok(entries)
+}
