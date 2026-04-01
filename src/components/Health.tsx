@@ -4,7 +4,7 @@ import { RefreshCw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useHarvestStatus, useTailAppLog, useCanopyDirCheck } from "@/queries";
+import { useHarvestStatus, useTailAppLog, useCanopyDirCheck, useAria2Check } from "@/queries";
 import { AssetFetcher } from "@/components/AssetFetcher";
 import { LogLine } from "@/components/LogLine";
 
@@ -47,6 +47,7 @@ function HealthIndicator({
 function HealthIndicators() {
   const { data: harvestStatus, isLoading: harvestLoading } = useHarvestStatus();
   const { data: canopyOk, isLoading: canopyLoading } = useCanopyDirCheck();
+  const { data: aria2Ok, isLoading: aria2Loading } = useAria2Check();
 
   const [apiOk, setApiOk] = useState<boolean | null>(null);
   const [apiLoading, setApiLoading] = useState(false);
@@ -78,7 +79,7 @@ function HealthIndicators() {
   }, []);
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <HealthIndicator
         label="Daemon Running"
         ok={harvestStatus?.running ?? false}
@@ -110,6 +111,12 @@ function HealthIndicators() {
           />
         </Button>
       </div>
+      <HealthIndicator
+        label="Aria2 RPC"
+        ok={aria2Ok ?? false}
+        loading={aria2Loading}
+        statusText={aria2Ok ? "Connected" : "Not reachable"}
+      />
     </div>
   );
 }

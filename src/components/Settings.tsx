@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Eye, EyeOff, Save } from "lucide-react";
+import { Eye, EyeOff, Save, Square } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAppConfig, useResolvedConfig, useHarvestStatus, type AppConfig } from "@/queries";
+import { useAppConfig, useResolvedConfig, useHarvestStatus, useLastPoll, type AppConfig } from "@/queries";
 import { useAppStore, serializeFlags } from "@/store";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -284,7 +284,137 @@ function ConfigForm() {
           </Button>
         </div>
       )}
+
+      <CutoverDate />
+
+      {status?.running && <StopPoll />}
     </div>
+  );
+}
+
+function CutoverDate() {
+  const { data: lastPoll } = useLastPoll();
+  const [date, setDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  // Only show if no poll has been run yet
+  const hasPollData = lastPoll && lastPoll.last_poll_ts;
+  if (hasPollData) return null;
+
+  async function handleSetCutover() {
+    if (!date) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await invoke("set_cutover_date", { date });
+      setMessage("Cutover date saved");
+    } catch (e) {
+      setMessage(`Error: ${e}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="glass-card border-t-2 border-t-amber-500/40">
+      <CardHeader>
+        <CardTitle className="text-xs font-semibold tracking-wider uppercase text-slate-400">
+          Cutover Date
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-xs text-slate-500">
+          Only download data after this date. Set this before the first poll to skip already-downloaded data.
+        </p>
+        <div className="flex items-center gap-3">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="h-8 rounded border border-white/[0.08] bg-white/[0.03] px-3 text-sm font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+          />
+          <Button
+            onClick={handleSetCutover}
+            disabled={saving || !date}
+            size="sm"
+            className="bg-teal-600 text-white hover:bg-teal-500"
+          >
+            {saving ? "Saving..." : "Set Cutover"}
+          </Button>
+          {message && (
+            <span className={`text-xs ${message.startsWith("Error") ? "text-red-400" : "text-teal-400"}`}>
+              {message}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StopPoll() {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const queryClient = useQueryClient();
+
+  async function handleStop() {
+    setStopping(true);
+    try {
+      await invoke("stop_harvest");
+      queryClient.invalidateQueries({ queryKey: ["harvestStatus"] });
+    } catch {
+      // Error handled silently
+    } finally {
+      setStopping(false);
+      setShowConfirm(false);
+    }
+  }
+
+  return (
+    <>
+      <Card className="glass-card border-t-2 border-t-red-500/40">
+        <CardContent className="pt-6">
+          <Button
+            onClick={() => setShowConfirm(true)}
+            size="sm"
+            className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30"
+          >
+            <Square className="size-3.5" data-icon="inline-start" />
+            Stop Poll
+          </Button>
+        </CardContent>
+      </Card>
+
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="rounded-lg border border-white/[0.1] bg-slate-900 p-6 shadow-xl max-w-sm space-y-4">
+            <h3 className="text-sm font-semibold text-slate-100">Stop Harvest Poll?</h3>
+            <p className="text-sm text-slate-400">
+              Are you sure you want to stop the poll process? All active downloads will stop.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConfirm(false)}
+                className="text-slate-400"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleStop}
+                disabled={stopping}
+                size="sm"
+                className="bg-red-600 text-white hover:bg-red-500"
+              >
+                {stopping ? "Stopping..." : "Stop Poll"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

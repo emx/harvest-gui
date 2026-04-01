@@ -59,7 +59,6 @@ pub fn load_config(app: AppHandle) -> Result<AppConfig, String> {
     }
     let data =
         fs::read_to_string(&path).map_err(|e| format!("Failed to read config: {}", e))?;
-    info!("config loaded from {}", path.display());
     serde_json::from_str(&data).map_err(|e| {
         error!("failed to parse config: {}", e);
         format!("Failed to parse config: {}", e)

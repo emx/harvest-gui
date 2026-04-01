@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Play, Square } from "lucide-react";
+import { Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,6 @@ import { LogLine } from "@/components/LogLine";
 export function Active() {
   const { data: status, refetch } = useHarvestStatus();
   const [starting, setStarting] = useState(false);
-  const [stopping, setStopping] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   const harvestFlags = useAppStore((s) => s.harvestFlags);
@@ -47,18 +46,6 @@ export function Active() {
       useAppStore.getState().addHarvestLog({ line: `Error: ${e}`, stream: "stderr", timestamp: "" });
     } finally {
       setStarting(false);
-    }
-  }
-
-  async function handleStop() {
-    setStopping(true);
-    try {
-      await invoke("stop_harvest");
-      refetch();
-    } catch (e) {
-      useAppStore.getState().addHarvestLog({ line: `Error: ${e}`, stream: "stderr", timestamp: "" });
-    } finally {
-      setStopping(false);
     }
   }
 
@@ -112,8 +99,8 @@ export function Active() {
             </label>
           </div>
 
-          <div className="flex gap-2">
-            {!running ? (
+          {!running && (
+            <div className="flex gap-2">
               <Button
                 onClick={handleStart}
                 disabled={starting}
@@ -123,18 +110,8 @@ export function Active() {
                 <Play className="size-4" data-icon="inline-start" />
                 {starting ? "Starting..." : "Start Harvest"}
               </Button>
-            ) : (
-              <Button
-                onClick={handleStop}
-                disabled={stopping}
-                size="sm"
-                className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30"
-              >
-                <Square className="size-4" data-icon="inline-start" />
-                {stopping ? "Stopping..." : "Stop Harvest"}
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
