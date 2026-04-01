@@ -8,11 +8,12 @@ interface LogLineProps {
 const HARVEST_RE =
   /^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+(DEBUG|INFO|WARNING|ERROR|CRITICAL)\s+(\S+)\s+[—-]\s+(.*)$/i;
 
-// simplelog formats:
-//   "HH:MM:SS [LEVEL] target: message"  (Config::default with time)
-//   "[YYYY-MM-DDTHH:MM:SS LEVEL target] message"  (custom config)
+// simplelog actual formats observed:
+//   "HH:MM:SS [LEVEL] message"          — brackets, no target
+//   "HH:MM:SS [LEVEL] target: message"  — brackets, with target
+//   "HH:MM:SS LEVEL target message"     — no brackets, with target word
 const APP_RE =
-  /^(?:(\d{2}:\d{2}:\d{2})\s+\[(TRACE|DEBUG|INFO|WARN|ERROR)]\s+(\S+?):\s+(.*)|\[(\d{4}-\d{2}-\d{2}T?\d{2}:\d{2}:\d{2})\s+(TRACE|DEBUG|INFO|WARN|ERROR)\s+(\S+?)]\s+(.*))$/i;
+  /^(\d{2}:\d{2}:\d{2})\s+\[?(TRACE|DEBUG|INFO|WARN|ERROR)]?\s+(.*)$/i;
 
 type Level = "error" | "warning" | "info" | "debug";
 
@@ -110,11 +111,18 @@ export function LogLine({ line, index, format = "harvest" }: LogLineProps) {
 
   let timestamp: string, levelRaw: string, module: string, message: string;
   if (format === "app") {
-    // APP_RE has two alternatives: groups 1-4 or 5-8
-    timestamp = match[1] ?? match[5] ?? "";
-    levelRaw = match[2] ?? match[6] ?? "INFO";
-    module = match[3] ?? match[7] ?? "";
-    message = match[4] ?? match[8] ?? "";
+    timestamp = match[1];
+    levelRaw = match[2];
+    const rest = match[3] ?? "";
+    // Try to extract "target: message" pattern
+    const targetMatch = rest.match(/^(\S+?):\s+(.*)$/);
+    if (targetMatch) {
+      module = targetMatch[1];
+      message = targetMatch[2];
+    } else {
+      module = "";
+      message = rest;
+    }
   } else {
     [, timestamp, levelRaw, module, message] = match;
   }
@@ -129,7 +137,7 @@ export function LogLine({ line, index, format = "harvest" }: LogLineProps) {
       <span className={`${levelColor} font-semibold`}>
         {levelRaw.toUpperCase()}
       </span>{" "}
-      <span className="text-cyan-600">{module}</span>{" "}
+      {module && <><span className="text-cyan-600">{module}</span>{" "}</>}
       {messageParts.map((p, i) => (
         <span key={i} className={p.className}>
           {p.text}
