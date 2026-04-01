@@ -9,6 +9,14 @@ export interface HarvestFlags {
   exclude: string;
 }
 
+export interface LogEntry {
+  line: string;
+  stream: string;
+  timestamp: string;
+}
+
+const MAX_LOG_LINES = 1000;
+
 interface AppState {
   activeView: View;
   setActiveView: (view: View) => void;
@@ -16,6 +24,9 @@ interface AppState {
   setHarvestFlags: (flags: Partial<HarvestFlags>) => void;
   selectedCollectId: string | null;
   setSelectedCollectId: (id: string | null) => void;
+  harvestLogs: LogEntry[];
+  addHarvestLog: (entry: LogEntry) => void;
+  clearHarvestLogs: () => void;
 }
 
 /** Serialize HarvestFlags for the Rust invoke call */
@@ -43,4 +54,11 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   selectedCollectId: null,
   setSelectedCollectId: (id) => set({ selectedCollectId: id }),
+  harvestLogs: [],
+  addHarvestLog: (entry) =>
+    set((state) => {
+      const next = [...state.harvestLogs, entry];
+      return { harvestLogs: next.length > MAX_LOG_LINES ? next.slice(-MAX_LOG_LINES) : next };
+    }),
+  clearHarvestLogs: () => set({ harvestLogs: [] }),
 }));

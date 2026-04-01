@@ -64,6 +64,7 @@ function ConfigForm() {
   async function handleRestart() {
     try {
       await invoke("stop_harvest");
+      useAppStore.getState().clearHarvestLogs();
       await invoke("start_harvest", { flags: serializeFlags(harvestFlags) });
       setNeedsRestart(false);
       queryClient.invalidateQueries({ queryKey: ["harvestStatus"] });

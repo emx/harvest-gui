@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { Play, Square } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,37 +9,18 @@ import { useAppStore, serializeFlags } from "@/store";
 import { AssetFetcher } from "@/components/AssetFetcher";
 import { LogLine } from "@/components/LogLine";
 
-const MAX_LOG_LINES = 1000;
-
-interface LogEntry {
-  line: string;
-  stream: string;
-  timestamp: string;
-}
-
 export function Active() {
   const { data: status, refetch } = useHarvestStatus();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
   const harvestFlags = useAppStore((s) => s.harvestFlags);
   const setHarvestFlags = useAppStore((s) => s.setHarvestFlags);
+  const logs = useAppStore((s) => s.harvestLogs);
+  const clearHarvestLogs = useAppStore((s) => s.clearHarvestLogs);
 
   const running = status?.running ?? false;
-
-  useEffect(() => {
-    const unlisten = listen<LogEntry>("harvest-log", (event) => {
-      setLogs((prev) => {
-        const next = [...prev, event.payload];
-        return next.length > MAX_LOG_LINES ? next.slice(-MAX_LOG_LINES) : next;
-      });
-    });
-    return () => {
-      unlisten.then((fn) => fn());
-    };
-  }, []);
 
   useEffect(() => {
     if (logRef.current) {
@@ -57,17 +37,14 @@ export function Active() {
 
   async function handleStart() {
     setStarting(true);
-    setLogs([]);
+    clearHarvestLogs();
     try {
       await invoke("start_harvest", {
         flags: serializeFlags(harvestFlags),
       });
       refetch();
     } catch (e) {
-      setLogs((prev) => [
-        ...prev,
-        { line: `Error: ${e}`, stream: "stderr", timestamp: "" },
-      ]);
+      useAppStore.getState().addHarvestLog({ line: `Error: ${e}`, stream: "stderr", timestamp: "" });
     } finally {
       setStarting(false);
     }
@@ -79,10 +56,7 @@ export function Active() {
       await invoke("stop_harvest");
       refetch();
     } catch (e) {
-      setLogs((prev) => [
-        ...prev,
-        { line: `Error: ${e}`, stream: "stderr", timestamp: "" },
-      ]);
+      useAppStore.getState().addHarvestLog({ line: `Error: ${e}`, stream: "stderr", timestamp: "" });
     } finally {
       setStopping(false);
     }
