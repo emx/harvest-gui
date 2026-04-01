@@ -1,3 +1,4 @@
+use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
 use std::process::{Child, Command, Stdio};
@@ -82,6 +83,7 @@ pub struct HarvestFlags {
 
 fn cleanup_old_process(handle: &mut Option<ProcessHandle>) {
     if let Some(mut old) = handle.take() {
+        warn!("reaping old harvest process");
         let _ = old.child.wait();
         for t in old.reader_threads.drain(..) {
             let _ = t.join();
@@ -155,7 +157,12 @@ pub fn start_harvest(
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().map_err(|e| format!("Failed to spawn harvest: {}", e))?;
+    info!("spawning harvest process");
+    let mut child = cmd.spawn().map_err(|e| {
+        error!("failed to spawn harvest: {}", e);
+        format!("Failed to spawn harvest: {}", e)
+    })?;
+    info!("harvest process started (pid: {:?})", child.id());
 
     let mut reader_threads = Vec::new();
 
@@ -221,6 +228,7 @@ pub fn stop_harvest(app: AppHandle) -> Result<String, String> {
 
     match guard.take() {
         Some(mut handle) => {
+            info!("stopping harvest process");
             handle
                 .child
                 .kill()
@@ -230,6 +238,7 @@ pub fn stop_harvest(app: AppHandle) -> Result<String, String> {
             for t in handle.reader_threads {
                 let _ = t.join();
             }
+            info!("harvest process stopped");
             Ok("Harvest stopped".to_string())
         }
         None => Err("No harvest process is running".to_string()),
